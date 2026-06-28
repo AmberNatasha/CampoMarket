@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Campo Market, supermercado orgánico online express." />
+    <title>@ViewData["Title"] - Campo Market</title>
+    <link rel="icon" type="image/x-icon" href="~/assets/favicon.ico" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark cm-navbar">
+            <div class="container px-4 px-lg-5">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <img class="brand-logo" src="~/Images/Logo.png" alt="Campo Market" />
+                    <span>Campo Market</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Abrir navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNavigation">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="About">Nosotros</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Contact">Contacto</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Login">Iniciar sesión</a></li>
+                        <li class="nav-item ms-lg-3"><a class="btn btn-primary" asp-controller="Home" asp-action="Registro">Registro</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <footer class="cm-footer py-4">
+        <div class="container px-4 px-lg-5">
+            <div class="row align-items-center justify-content-between gy-3">
+                <div class="col-md-auto">
+                    <div class="small">Copyright &copy; Campo Market 2026</div>
+                </div>
+                <div class="col-md-auto">
+                    <a asp-controller="Home" asp-action="Privacy">Privacidad</a>
+                    <span class="mx-2">·</span>
+                    <a asp-controller="Home" asp-action="Contact">Contacto</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

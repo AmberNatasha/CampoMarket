@@ -1,0 +1,20 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET Core local development keys
+.aspnet-data-protection-keys/
+**/.aspnet-data-protection-keys/
+
+# Build output and logs
+TestResults/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

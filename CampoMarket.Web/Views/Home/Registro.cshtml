@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Registro";
+}
+
+<section class="cm-page-header">
+    <div class="container px-4 px-lg-5">
+        <span class="cm-kicker">Compra fresco y fácil</span>
+        <h1>Crear cuenta</h1>
+        <p>Crea tu cuenta para comprar fresco, orgánico y rápido.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="cm-card">
+                    <h2 class="h3 text-center mb-4">Registro en Campo Market</h2>
+                    <form>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="nombre">Nombre</label>
+                                <input id="nombre" type="text" class="form-control" placeholder="Ingrese su nombre" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="apellidos">Apellidos</label>
+                                <input id="apellidos" type="text" class="form-control" placeholder="Ingrese sus apellidos" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="correo">Correo electrónico</label>
+                                <input id="correo" type="email" class="form-control" placeholder="correo@ejemplo.com" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="telefono">Teléfono</label>
+                                <input id="telefono" type="tel" class="form-control" placeholder="8888-8888" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="contrasena">Contraseña</label>
+                                <input id="contrasena" type="password" class="form-control" placeholder="********" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="confirmar">Confirmar contraseña</label>
+                                <input id="confirmar" type="password" class="form-control" placeholder="********" />
+                            </div>
+                        </div>
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="terminos" />
+                            <label class="form-check-label" for="terminos">Acepto los términos y condiciones</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Registrarse</button>
+                    </form>
+                    <hr />
+                    <div class="text-center">¿Ya tiene una cuenta? <a asp-controller="Home" asp-action="Login">Iniciar sesión</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,59 @@
+@{
+    ViewData["Title"] = "Contacto";
+}
+
+<section class="cm-page-header">
+    <div class="container px-4 px-lg-5">
+        <span class="cm-kicker">Estamos cerca</span>
+        <h1>Contáctanos</h1>
+        <p>Estamos listos para ayudarte con pedidos, entregas y productos frescos.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="cm-card">
+                    <form>
+                        <div class="form-floating mb-3">
+                            <input class="form-control" id="name" type="text" placeholder="Nombre completo" />
+                            <label for="name">Nombre completo</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input class="form-control" id="email" type="email" placeholder="correo@ejemplo.com" />
+                            <label for="email">Correo electrónico</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input class="form-control" id="phone" type="tel" placeholder="8888-8888" />
+                            <label for="phone">Teléfono</label>
+                        </div>
+                        <div class="form-floating mb-4">
+                            <textarea class="form-control" id="message" placeholder="Mensaje" style="height: 10rem"></textarea>
+                            <label for="message">Mensaje</label>
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100" type="submit">Enviar</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="row g-4">
+                    <div class="col-sm-6 col-lg-12">
+                        <div class="cm-card h-100">
+                            <i class="bi bi-chat-dots cm-icon"></i>
+                            <h3>Chat de pedidos</h3>
+                            <p>Consulta disponibilidad, horarios y estado de tu entrega express.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-12">
+                        <div class="cm-card h-100">
+                            <i class="bi bi-telephone cm-icon"></i>
+                            <h3>Atención cercana</h3>
+                            <p>Resolvemos dudas sobre productos, pagos y zonas de entrega.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

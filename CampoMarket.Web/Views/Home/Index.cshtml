@@ -1,0 +1,119 @@
+@{
+    ViewData["Title"] = "Supermercado orgánico online";
+}
+
+<section class="cm-hero">
+    <div class="container px-4 px-lg-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="cm-kicker">Orgánico · Local · Express</span>
+                <h1>Campo Market</h1>
+                <p class="lead">Supermercado orgánico online express con frutas, verduras y productos frescos llevados directo a tu puerta.</p>
+                <div class="d-flex flex-column flex-sm-row gap-3">
+                    <a class="btn btn-primary btn-lg" asp-controller="Home" asp-action="Contact">Comprar ahora</a>
+                    <a class="btn btn-outline-primary btn-lg" asp-controller="Home" asp-action="About">Conocer más</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img class="cm-hero-image" src="~/Images/Banner.jpg" alt="Frutas frescas en Campo Market" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <h2 class="section-title">Compra orgánica, rápida y sin filas.</h2>
+                <p class="text-muted">Una experiencia familiar, limpia y cercana para llenar tu cocina con productos frescos.</p>
+            </div>
+            <div class="col-lg-8">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="cm-card h-100">
+                            <i class="bi bi-basket cm-icon"></i>
+                            <h3>Frescura diaria</h3>
+                            <p>Seleccionamos frutas, verduras y básicos orgánicos con calidad visible desde el primer pedido.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="cm-card h-100">
+                            <i class="bi bi-truck cm-icon"></i>
+                            <h3>Entrega express</h3>
+                            <p>Preparamos tu compra en línea y la enviamos rápido para conservar sabor, textura y frescura.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="cm-card h-100">
+                            <i class="bi bi-list-check cm-icon"></i>
+                            <h3>Canasta flexible</h3>
+                            <p>Arma tu pedido por unidad, paquete o canasta semanal según lo que necesitas en casa.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="cm-card h-100">
+                            <i class="bi bi-patch-check cm-icon"></i>
+                            <h3>Calidad confiable</h3>
+                            <p>Trabajamos con productos frescos, trazables y cuidadosamente empacados para tu familia.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 cm-section-soft">
+    <div class="container px-4 px-lg-5">
+        <div class="text-center mb-5">
+            <span class="cm-kicker">Favoritos orgánicos</span>
+            <h2 class="section-title">Lo esencial para una cocina fresca</h2>
+            <p class="text-muted mb-0">Opciones naturales, prácticas y listas para recibir en casa.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img class="card-img-top" src="~/Images/Banner.jpg" alt="Frutas de temporada" />
+                    <div class="card-body">
+                        <span class="badge cm-badge">Fresco</span>
+                        <h3 class="h5 mt-3">Frutas seleccionadas</h3>
+                        <p class="mb-0">Piñas, frutos rojos, cítricos y productos de temporada para llegar frescos a casa.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img class="card-img-top card-img-contain" src="~/Images/Logo.png" alt="Logo Campo Market" />
+                    <div class="card-body">
+                        <span class="badge cm-badge">Orgánico</span>
+                        <h3 class="h5 mt-3">Básicos para tu despensa</h3>
+                        <p class="mb-0">Productos naturales para cocinar mejor sin perder tiempo buscando en pasillos.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img class="card-img-top" src="~/Images/Paletas.png" alt="Paleta de colores Campo Market" />
+                    <div class="card-body">
+                        <span class="badge cm-badge">Express</span>
+                        <h3 class="h5 mt-3">Canastas de temporada</h3>
+                        <p class="mb-0">Combina frutas, verduras y abarrotes saludables en una compra rápida y flexible.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="cm-cta">
+            <div>
+                <h2>Recibe productos orgánicos sin salir de casa.</h2>
+                <p>Ofertas frescas, canastas de temporada y entregas express para tu rutina.</p>
+            </div>
+            <a class="btn btn-warning btn-lg" asp-controller="Home" asp-action="Registro">Crear cuenta</a>
+        </div>
+    </div>
+</section>
