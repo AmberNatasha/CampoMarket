@@ -1,0 +1,97 @@
+CREATE DATABASE CampoMarket;
+GO
+
+USE CampoMarket;
+GO
+
+CREATE TABLE Usuario (
+    id_usuario INT IDENTITY(1,1) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    telefono VARCHAR(30),
+    rol VARCHAR(50) NOT NULL,
+    fecha_registro DATETIME NOT NULL DEFAULT GETDATE()
+);
+
+CREATE TABLE Direccion (
+    id_direccion INT IDENTITY(1,1) PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    provincia VARCHAR(100) NOT NULL,
+    canton VARCHAR(100) NOT NULL,
+    distrito VARCHAR(100) NOT NULL,
+    senas_exactas VARCHAR(255) NOT NULL,
+    CONSTRAINT FK_Direccion_Usuario
+        FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+
+CREATE TABLE MetodoEntrega (
+    id_metodo INT IDENTITY(1,1) PRIMARY KEY,
+    tipo VARCHAR(100) NOT NULL,
+    costo_adicional DECIMAL(10,2) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE Categoria (
+    id_categoria INT IDENTITY(1,1) PRIMARY KEY,
+    nombre_categoria VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE Producto (
+    id_producto INT IDENTITY(1,1) PRIMARY KEY,
+    nombre_producto VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    precio DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL,
+    imagen_url VARCHAR(255),
+    id_categoria INT NOT NULL,
+    CONSTRAINT FK_Producto_Categoria
+        FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria)
+);
+
+CREATE TABLE Carrito (
+    id_carrito INT IDENTITY(1,1) PRIMARY KEY,
+    id_usuario INT NOT NULL UNIQUE,
+    fecha_creacion DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_Carrito_Usuario
+        FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+
+CREATE TABLE DetalleCarrito (
+    id_detalle_carrito INT IDENTITY(1,1) PRIMARY KEY,
+    id_carrito INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad INT NOT NULL,
+    CONSTRAINT FK_DetalleCarrito_Carrito
+        FOREIGN KEY (id_carrito) REFERENCES Carrito(id_carrito),
+    CONSTRAINT FK_DetalleCarrito_Producto
+        FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
+);
+
+CREATE TABLE Pedido (
+    id_pedido INT IDENTITY(1,1) PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_direccion INT NOT NULL,
+    id_metodo INT NOT NULL,
+    fecha_pedido DATETIME NOT NULL DEFAULT GETDATE(),
+    estado VARCHAR(50) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    CONSTRAINT FK_Pedido_Usuario
+        FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario),
+    CONSTRAINT FK_Pedido_Direccion
+        FOREIGN KEY (id_direccion) REFERENCES Direccion(id_direccion),
+    CONSTRAINT FK_Pedido_MetodoEntrega
+        FOREIGN KEY (id_metodo) REFERENCES MetodoEntrega(id_metodo)
+);
+
+CREATE TABLE DetallePedido (
+    id_detalle_pedido INT IDENTITY(1,1) PRIMARY KEY,
+    id_pedido INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    CONSTRAINT FK_DetallePedido_Pedido
+        FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
+    CONSTRAINT FK_DetallePedido_Producto
+        FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
+);
