@@ -1,0 +1,20 @@
+@model IEnumerable<CampoMarket.Web.Models.Pedido>
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Numero</th><th>Fecha</th><th>Tipo</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var pedido in Model)
+            {
+                <tr>
+                    <td>@pedido.Numero</td>
+                    <td>@pedido.FechaUtc.ToLocalTime().ToString("g")</td>
+                    <td>@pedido.TipoEntrega</td>
+                    <td>$@pedido.Total.ToString("0.00")</td>
+                    <td><span class="badge status-@pedido.Estado.ToLowerInvariant()">@pedido.Estado</span></td>
+                    <td><a class="btn btn-outline-primary" asp-controller="Admin" asp-action="PedidoDetalle" asp-route-id="@pedido.Id">Detalle</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

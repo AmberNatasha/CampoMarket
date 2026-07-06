@@ -1,0 +1,39 @@
+@model IEnumerable<CampoMarket.Web.Models.DireccionCliente>
+@{
+    ViewData["Title"] = "Direcciones";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h1 class="section-title mb-0">Direcciones de entrega</h1>
+            <a class="btn btn-primary" asp-controller="Cuenta" asp-action="NuevaDireccion">Nueva direccion</a>
+        </div>
+        <div class="row g-4">
+            @foreach (var direccion in Model)
+            {
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between gap-2">
+                                <h2 class="h5">@direccion.Alias</h2>
+                                @if (direccion.Predeterminada)
+                                {
+                                    <span class="badge">Predeterminada</span>
+                                }
+                            </div>
+                            <p>@direccion.Detalle</p>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-outline-primary" asp-controller="Cuenta" asp-action="EditarDireccion" asp-route-id="@direccion.Id">Editar</a>
+                                <form method="post" asp-controller="Cuenta" asp-action="EliminarDireccion" asp-route-id="@direccion.Id" onsubmit="return confirm('Eliminar esta direccion?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-outline-danger" type="submit">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

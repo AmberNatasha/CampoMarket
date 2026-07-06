@@ -1,0 +1,58 @@
+@model CampoMarket.Web.Models.PedidoAdminViewModel
+@{
+    ViewData["Title"] = "Pedidos admin";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <h1 class="section-title mb-4">Gestion de pedidos</h1>
+        <form class="cm-card mb-4" method="get" asp-controller="Admin" asp-action="Pedidos">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label" for="buscar">Buscar</label>
+                    <input class="form-control" id="buscar" name="buscar" value="@Model.Buscar" placeholder="Numero o cliente" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="estado">Estado</label>
+                    <select class="form-select" id="estado" name="estado">
+                        <option value="">Todos</option>
+                        @foreach (var estado in new[] { "Pendiente", "Preparando", "Listo", "Entregado", "Cancelado" })
+                        {
+                            <option value="@estado" selected="@(Model.Estado == estado)">@estado</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="tipo">Tipo</label>
+                    <select class="form-select" id="tipo" name="tipo">
+                        <option value="">Todos</option>
+                        <option value="Express" selected="@(Model.Tipo == "Express")">Express</option>
+                        <option value="Recoleccion" selected="@(Model.Tipo == "Recoleccion")">Recoleccion</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="historial" name="historial" value="true" checked="@Model.Historial" />
+                        <label class="form-check-label" for="historial">Incluir cerrados</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="submit">Filtrar</button>
+                </div>
+            </div>
+        </form>
+        <div class="cm-card">
+            <partial name="_PedidosTabla" model="Model.Pedidos" />
+            <nav class="mt-3" aria-label="Paginacion pedidos">
+                <ul class="pagination justify-content-center">
+                    @for (var page = 1; page <= Model.TotalPaginas; page++)
+                    {
+                        <li class="page-item @(page == Model.Pagina ? "active" : "")">
+                            <a class="page-link" asp-controller="Admin" asp-action="Pedidos" asp-route-estado="@Model.Estado" asp-route-tipo="@Model.Tipo" asp-route-buscar="@Model.Buscar" asp-route-historial="@Model.Historial" asp-route-pagina="@page">@page</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>

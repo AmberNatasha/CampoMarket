@@ -1,0 +1,25 @@
+@model IEnumerable<CampoMarket.Web.Models.Pedido>
+@{
+    ViewData["Title"] = "Admin";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h1 class="section-title mb-0">Panel administrativo</h1>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="Pedidos">Pedidos</a>
+                <a class="btn btn-primary" asp-controller="Admin" asp-action="Productos">Inventario</a>
+            </div>
+        </div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4"><div class="cm-card metric"><span>Pedidos de hoy</span><strong>@ViewBag.PedidosDia</strong></div></div>
+            <div class="col-md-4"><div class="cm-card metric"><span>Ingresos de hoy</span><strong>$@(((decimal)ViewBag.IngresosDia).ToString("0.00"))</strong></div></div>
+            <div class="col-md-4"><div class="cm-card metric"><span>Stock bajo</span><strong>@ViewBag.StockBajo</strong></div></div>
+        </div>
+        <div class="cm-card">
+            <h2 class="h4">Pedidos activos</h2>
+            <partial name="_PedidosTabla" model="Model" />
+        </div>
+    </div>
+</section>

@@ -1,0 +1,55 @@
+@model CampoMarket.Web.Models.ProductoFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Nuevo producto" : "Editar producto";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="cm-card">
+            <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+            <form method="post" asp-controller="Admin" asp-action="GuardarProducto">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" asp-for="Nombre"></label>
+                        <input class="form-control" asp-for="Nombre" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" asp-for="Precio"></label>
+                        <input class="form-control" asp-for="Precio" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" asp-for="CategoriaId">Categoria</label>
+                        <select class="form-select" asp-for="CategoriaId">
+                            @foreach (var categoria in ViewBag.Categorias)
+                            {
+                                <option value="@categoria.Id">@categoria.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" asp-for="Descripcion"></label>
+                        <textarea class="form-control" asp-for="Descripcion"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" asp-for="Stock"></label>
+                        <input class="form-control" asp-for="Stock" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" asp-for="StockMinimo"></label>
+                        <input class="form-control" asp-for="StockMinimo" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" asp-for="ImagenUrl">Imagen URL</label>
+                        <input class="form-control" asp-for="ImagenUrl" />
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Guardar</button>
+                    <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="Productos">Volver</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>

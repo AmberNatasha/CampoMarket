@@ -1,0 +1,87 @@
+@using CampoMarket.Web.Models
+@model CampoMarket.Web.Models.CarritoViewModel
+@{
+    ViewData["Title"] = "Carrito";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <h1 class="section-title mb-4">Carrito</h1>
+        @if (!Model.Lineas.Any())
+        {
+            <div class="cm-card">
+                <p class="mb-3">Tu carrito esta vacio.</p>
+                <a class="btn btn-primary" asp-controller="Catalogo" asp-action="Index">Ir al catalogo</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="cm-card">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
+                                <tbody>
+                                    @foreach (var item in Model.Lineas)
+                                    {
+                                        <tr>
+                                            <td>@item.Producto.Nombre</td>
+                                            <td>$@item.Producto.Precio.ToString("0.00")</td>
+                                            <td>
+                                                <form method="post" asp-controller="Carrito" asp-action="Actualizar" class="d-flex gap-2">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="productoId" value="@item.Producto.Id" />
+                                                    <input class="form-control cart-qty" type="number" name="cantidad" min="0" max="@item.Producto.Stock" value="@item.Cantidad" />
+                                                    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-arrow-repeat"></i></button>
+                                                </form>
+                                            </td>
+                                            <td>$@item.Subtotal.ToString("0.00")</td>
+                                            <td>
+                                                <form method="post" asp-controller="Carrito" asp-action="Eliminar" onsubmit="return confirm('Eliminar este producto?')">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="productoId" value="@item.Producto.Id" />
+                                                    <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <form method="post" asp-controller="Carrito" asp-action="Vaciar" onsubmit="return confirm('Vaciar todo el carrito?')">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-outline-danger" type="submit">Vaciar carrito</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="cm-card">
+                        <h2 class="h4">Resumen</h2>
+                        <div class="d-flex justify-content-between fs-5 mb-3">
+                            <strong>Total</strong>
+                            <strong>$@Model.Total.ToString("0.00")</strong>
+                        </div>
+                        <form method="post" asp-controller="Carrito" asp-action="Confirmar">
+                            @Html.AntiForgeryToken()
+                            <label class="form-label" for="tipoEntrega">Entrega</label>
+                            <select class="form-select mb-3" id="tipoEntrega" name="tipoEntrega">
+                                <option value="@TiposEntrega.Express">Express a domicilio</option>
+                                <option value="@TiposEntrega.Recoleccion">Recoleccion en tienda</option>
+                            </select>
+                            <label class="form-label" for="direccionEntrega">Direccion</label>
+                            <select class="form-select mb-3" id="direccionEntrega" name="direccionEntrega">
+                                @foreach (var direccion in Model.Direcciones)
+                                {
+                                    <option value="@direccion.Detalle">@direccion.Alias - @direccion.Detalle</option>
+                                }
+                                <option value="Direccion nueva">Direccion nueva o por confirmar</option>
+                            </select>
+                            <button class="btn btn-primary w-100" type="submit">Confirmar pedido</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>

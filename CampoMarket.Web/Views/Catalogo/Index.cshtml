@@ -1,0 +1,146 @@
+@model CampoMarket.Web.Models.CatalogoViewModel
+@{
+    ViewData["Title"] = "Catalogo";
+}
+
+<section class="cm-page-header">
+    <div class="container px-4 px-lg-5">
+        <span class="cm-kicker">Frescura y Calidad desde 2026</span>
+        <h1>Catalogo</h1>
+        <p>Filtra, busca y agrega productos frescos al carrito.</p>
+    </div>
+</section>
+
+<section class="py-4">
+    <div class="container px-4 px-lg-5">
+        @if (User.IsInRole("Cliente"))
+        {
+            <div id="catalogAntiForgery" class="d-none">@Html.AntiForgeryToken()</div>
+        }
+
+        <form class="cm-card mb-4" method="get" asp-controller="Catalogo" asp-action="Index" id="catalogFilters">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label" for="buscar">Buscar</label>
+                    <input class="form-control" id="buscar" name="buscar" value="@Model.Buscar" placeholder="Nombre del producto" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="categoria">Categoria</label>
+                    <select class="form-select" id="categoria" name="categoria">
+                        <option value="">Todas</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <option value="@categoria.Id" selected="@(Model.Categoria == categoria.Id.ToString())">@categoria.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="orden">Orden</label>
+                    <select class="form-select" id="orden" name="orden">
+                        <option value="">Nombre</option>
+                        <option value="precio_asc" selected="@(Model.Orden == "precio_asc")">Menor precio</option>
+                        <option value="precio_desc" selected="@(Model.Orden == "precio_desc")">Mayor precio</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="submit"><i class="bi bi-search"></i> Filtrar</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="row g-4" id="catalogResults">
+            @foreach (var producto in Model.Productos)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <article class="card h-100 product-card">
+                        <img class="card-img-top" src="@producto.ImagenUrl" alt="@producto.Nombre" />
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between gap-2">
+                                <h2 class="h5">@producto.Nombre</h2>
+                                <span class="price">$@producto.Precio.ToString("0.00")</span>
+                            </div>
+                            <p class="text-muted">@producto.Descripcion</p>
+                            <div class="small mb-3">Stock: @producto.Stock</div>
+                            <div class="mt-auto d-flex gap-2">
+                                <a class="btn btn-outline-primary flex-fill" asp-controller="Catalogo" asp-action="Detalle" asp-route-id="@producto.Id">Ver</a>
+                                @if (User.IsInRole("Cliente"))
+                                {
+                                    <form method="post" asp-controller="Carrito" asp-action="Agregar" class="flex-fill">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productoId" value="@producto.Id" />
+                                        <input type="hidden" name="cantidad" value="1" />
+                                        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-basket"></i> Agregar</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+        <nav class="mt-4" aria-label="Paginacion catalogo">
+            <ul class="pagination justify-content-center">
+                @for (var page = 1; page <= Model.TotalPaginas; page++)
+                {
+                    <li class="page-item @(page == Model.Pagina ? "active" : "")">
+                        <a class="page-link" asp-controller="Catalogo" asp-action="Index" asp-route-categoria="@Model.Categoria" asp-route-buscar="@Model.Buscar" asp-route-orden="@Model.Orden" asp-route-pagina="@page">@page</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('catalogFilters');
+            const results = document.getElementById('catalogResults');
+            const token = document.querySelector('#catalogAntiForgery input[name="__RequestVerificationToken"]')?.value ?? '';
+            let timer;
+
+            const render = (items) => {
+                results.innerHTML = items.map(producto => {
+                    const buy = producto.puedeComprar
+                        ? `<form method="post" action="/carrito/agregar" class="flex-fill">
+                               <input name="__RequestVerificationToken" type="hidden" value="${token}" />
+                               <input type="hidden" name="productoId" value="${producto.id}" />
+                               <input type="hidden" name="cantidad" value="1" />
+                               <button class="btn btn-primary w-100" type="submit"><i class="bi bi-basket"></i> Agregar</button>
+                           </form>`
+                        : '';
+                    return `<div class="col-md-6 col-xl-4">
+                        <article class="card h-100 product-card">
+                            <img class="card-img-top" src="${producto.imagenUrl}" alt="${producto.nombre}" />
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <h2 class="h5">${producto.nombre}</h2>
+                                    <span class="price">$${producto.precio}</span>
+                                </div>
+                                <p class="text-muted">${producto.descripcion}</p>
+                                <div class="small mb-3">Stock: ${producto.stock}</div>
+                                <div class="mt-auto d-flex gap-2">
+                                    <a class="btn btn-outline-primary flex-fill" href="/catalogo/producto/${producto.id}">Ver</a>
+                                    ${buy}
+                                </div>
+                            </div>
+                        </article>
+                    </div>`;
+                }).join('');
+            };
+
+            const search = () => {
+                const data = new URLSearchParams(new FormData(form));
+                fetch(`/catalogo/buscar-json?${data.toString()}`)
+                    .then(response => response.json())
+                    .then(payload => render(payload.productos));
+            };
+
+            form.addEventListener('input', () => {
+                clearTimeout(timer);
+                timer = setTimeout(search, 250);
+            });
+            form.addEventListener('change', search);
+        })();
+    </script>
+}

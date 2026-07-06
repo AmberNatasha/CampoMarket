@@ -1,0 +1,41 @@
+@using CampoMarket.Web.Models
+@model CampoMarket.Web.Models.Pedido
+@{
+    ViewData["Title"] = Model.Numero;
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="cm-card mb-4">
+            <div class="d-flex flex-wrap justify-content-between gap-3">
+                <div>
+                    <span class="cm-kicker">Pedido</span>
+                    <h1 class="h3">@Model.Numero</h1>
+                    <p class="mb-0">@Model.TipoEntrega - @Model.DireccionEntrega</p>
+                </div>
+                <div class="text-lg-end">
+                    <span class="badge status-@Model.Estado.ToLowerInvariant()">@Model.Estado</span>
+                    <div class="fs-4 fw-bold">$@Model.Total.ToString("0.00")</div>
+                </div>
+            </div>
+        </div>
+        <div class="cm-card">
+            <table class="table align-middle">
+                <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.Detalles)
+                    {
+                        <tr><td>@item.ProductoNombre</td><td>@item.Cantidad</td><td>$@item.PrecioUnitario.ToString("0.00")</td><td>$@item.Subtotal.ToString("0.00")</td></tr>
+                    }
+                </tbody>
+            </table>
+            @if (Model.Estado == EstadosPedido.Pendiente)
+            {
+                <form method="post" asp-controller="Pedidos" asp-action="Cancelar" asp-route-id="@Model.Id" onsubmit="return confirm('Cancelar este pedido?')">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-danger" type="submit">Cancelar pedido</button>
+                </form>
+            }
+        </div>
+    </div>
+</section>

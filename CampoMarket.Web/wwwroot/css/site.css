@@ -48,8 +48,16 @@ body {
   margin: 0;
   color: var(--cm-charcoal);
   background: var(--cm-cream);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+.navbar-brand,
+.section-title {
+  font-family: "Fredoka", "Poppins", system-ui, sans-serif;
 }
 
 a {
@@ -239,6 +247,79 @@ a:focus {
   background: rgba(168, 197, 154, 0.22);
   border-top-left-radius: 1rem;
   border-top-right-radius: 1rem;
+}
+
+.product-card .card-body {
+  min-height: 19rem;
+}
+
+.price {
+  color: var(--cm-primary-green);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cm-detail-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 1rem;
+  border: 1px solid var(--cm-border);
+  box-shadow: var(--cm-shadow);
+}
+
+.cart-qty {
+  width: 5.5rem;
+}
+
+.stock-input {
+  width: 5.5rem;
+}
+
+.metric {
+  min-height: 8rem;
+}
+
+.metric span {
+  display: block;
+  color: rgba(47, 47, 47, 0.68);
+  font-weight: 700;
+}
+
+.metric strong {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--cm-primary-green);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.status-pendiente {
+  background: var(--cm-honey);
+}
+
+.status-preparando {
+  color: var(--cm-white);
+  background: var(--cm-primary-green);
+}
+
+.status-listo {
+  color: var(--cm-charcoal);
+  background: var(--cm-sage);
+}
+
+.status-entregado {
+  color: var(--cm-white);
+  background: #3d762f;
+}
+
+.status-cancelado {
+  color: var(--cm-white);
+  background: #9c3f22;
+}
+
+.stock-low > * {
+  background: rgba(244, 162, 97, 0.22) !important;
 }
 
 .card-img-contain {

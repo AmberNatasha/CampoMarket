@@ -1,0 +1,58 @@
+@using CampoMarket.Web.Models
+@model CampoMarket.Web.Models.Pedido
+@{
+    ViewData["Title"] = Model.Numero;
+    var cliente = ViewBag.Cliente as Usuario;
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="cm-card mb-4">
+            <div class="d-flex flex-wrap justify-content-between gap-3">
+                <div>
+                    <span class="cm-kicker">Preparacion</span>
+                    <h1 class="h3">@Model.Numero</h1>
+                    <p class="mb-1">Cliente: <strong>@cliente?.Nombre</strong></p>
+                    <p class="mb-0">@Model.TipoEntrega - @Model.DireccionEntrega</p>
+                </div>
+                <div class="text-lg-end">
+                    <span class="badge status-@Model.Estado.ToLowerInvariant()">@Model.Estado</span>
+                    <div class="fs-4 fw-bold">$@Model.Total.ToString("0.00")</div>
+                    @if (Model.Estado is EstadosPedido.Pendiente or EstadosPedido.Preparando or EstadosPedido.Listo)
+                    {
+                        <form class="mt-2" method="post" asp-controller="Admin" asp-action="Avanzar" asp-route-id="@Model.Id">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-primary" type="submit">Avanzar estado</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="cm-card">
+                    <table class="table align-middle">
+                        <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Detalles)
+                            {
+                                <tr><td>@item.ProductoNombre</td><td>@item.Cantidad</td><td>$@item.PrecioUnitario.ToString("0.00")</td><td>$@item.Subtotal.ToString("0.00")</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="cm-card">
+                    <h2 class="h5">Historial</h2>
+                    <ul class="cm-list">
+                        @foreach (var item in Model.Historial.OrderByDescending(h => h.FechaUtc))
+                        {
+                            <li>@item.Estado - @item.FechaUtc.ToLocalTime().ToString("g")</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

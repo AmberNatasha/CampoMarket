@@ -1,0 +1,37 @@
+@model IEnumerable<CampoMarket.Web.Models.Categoria>
+@{
+    ViewData["Title"] = "Categorias";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h1 class="section-title mb-0">Categorias</h1>
+            <a class="btn btn-primary" asp-controller="Admin" asp-action="NuevaCategoria">Nueva categoria</a>
+        </div>
+        <div class="cm-card">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Nombre</th><th>Descripcion</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var categoria in Model)
+                        {
+                            <tr>
+                                <td>@categoria.Nombre</td>
+                                <td>@categoria.Descripcion</td>
+                                <td>@(categoria.Activa ? "Activa" : "Inactiva")</td>
+                                <td class="text-end">
+                                    <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="EditarCategoria" asp-route-id="@categoria.Id">Editar</a>
+                                    <form method="post" asp-controller="Admin" asp-action="EliminarCategoria" asp-route-id="@categoria.Id" class="d-inline" onsubmit="return confirm('Eliminar categoria?')">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-outline-danger" type="submit">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

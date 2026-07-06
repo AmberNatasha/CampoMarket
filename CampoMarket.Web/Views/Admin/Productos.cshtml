@@ -1,0 +1,46 @@
+@model IEnumerable<CampoMarket.Web.Models.Producto>
+@{
+    ViewData["Title"] = "Inventario";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h1 class="section-title mb-0">Productos e inventario</h1>
+            <a class="btn btn-primary" asp-controller="Admin" asp-action="NuevoProducto">Nuevo producto</a>
+        </div>
+        <div class="cm-card">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Ajuste</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var producto in Model)
+                        {
+                            <tr class="@(producto.Stock <= producto.StockMinimo ? "stock-low" : "")">
+                                <td>@producto.Nombre</td>
+                                <td>$@producto.Precio.ToString("0.00")</td>
+                                <td>@producto.Stock / min @producto.StockMinimo</td>
+                                <td>@(producto.Activo ? "Activo" : "Inactivo")</td>
+                                <td>
+                                    <form method="post" asp-controller="Admin" asp-action="AjustarStock" asp-route-id="@producto.Id" class="d-flex gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input class="form-control stock-input" type="number" name="cantidad" min="1" value="1" />
+                                        <input class="form-control" name="motivo" placeholder="Motivo" />
+                                        <button class="btn btn-outline-primary" type="submit">Sumar</button>
+                                    </form>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="EditarProducto" asp-route-id="@producto.Id">Editar</a>
+                                    <form method="post" asp-controller="Admin" asp-action="DesactivarProducto" asp-route-id="@producto.Id" class="d-inline" onsubmit="return confirm('Desactivar producto?')">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-outline-danger" type="submit">Desactivar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

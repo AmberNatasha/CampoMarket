@@ -1,34 +1,46 @@
+@model CampoMarket.Web.Models.RecuperarPasswordViewModel
 @{
-    ViewData["Title"] = "Recuperar contraseña";
+    ViewData["Title"] = "Recuperar contrasena";
 }
 
 <section class="cm-page-header">
     <div class="container px-4 px-lg-5">
-        <span class="cm-kicker">Acceso a tu cuenta</span>
-        <h1>Recuperar contraseña</h1>
-        <p>Ingresa tu correo para recuperar el acceso a tus compras.</p>
+        <span class="cm-kicker">Seguridad de cuenta</span>
+        <h1>Recuperar contrasena</h1>
+        <p>Genera un enlace temporal valido por una hora.</p>
     </div>
 </section>
 
 <section class="py-5">
     <div class="container px-4 px-lg-5">
         <div class="row justify-content-center">
-            <div class="col-md-7 col-lg-5">
-                <div class="cm-card text-center">
-                    <i class="bi bi-envelope-lock cm-icon cm-icon-large"></i>
-                    <h2 class="h3 mt-3">¿Olvidó su contraseña?</h2>
-                    <p class="text-muted">Escriba su correo electrónico y le enviaremos un enlace para restablecer su contraseña.</p>
-                    <form>
-                        <div class="mb-4 text-start">
-                            <label class="form-label" for="correo-recuperar">Correo electrónico</label>
-                            <input id="correo-recuperar" type="email" class="form-control" placeholder="correo@ejemplo.com" required />
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    @if (ViewBag.Mensaje is string mensaje)
+                    {
+                        <div class="alert alert-success">@mensaje</div>
+                    }
+                    @if (ViewBag.Token is string token)
+                    {
+                        <div class="alert alert-info">
+                            Prototipo: <a asp-controller="Cuenta" asp-action="Restablecer" asp-route-token="@token">abrir enlace de restablecimiento</a>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-lg w-100">Enviar enlace</button>
+                    }
+                    <form method="post" asp-controller="Cuenta" asp-action="Recuperar">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-4">
+                            <label class="form-label" asp-for="Correo"></label>
+                            <input class="form-control" asp-for="Correo" placeholder="correo@ejemplo.com" />
+                            <span asp-validation-for="Correo" class="text-danger"></span>
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">Generar enlace</button>
                     </form>
-                    <hr />
-                    <a asp-controller="Home" asp-action="Login">Volver al inicio de sesión</a>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

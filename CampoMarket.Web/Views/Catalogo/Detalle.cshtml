@@ -1,0 +1,36 @@
+@model CampoMarket.Web.Models.Producto
+@{
+    ViewData["Title"] = Model.Nombre;
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-6">
+                <img class="cm-detail-image" src="@Model.ImagenUrl" alt="@Model.Nombre" />
+            </div>
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    <span class="cm-kicker">Producto fresco</span>
+                    <h1 class="section-title">@Model.Nombre</h1>
+                    <p>@Model.Descripcion</p>
+                    <p class="price fs-3">$@Model.Precio.ToString("0.00")</p>
+                    <p>Stock disponible: <strong>@Model.Stock</strong></p>
+                    @if (User.IsInRole("Cliente"))
+                    {
+                        <form method="post" asp-controller="Carrito" asp-action="Agregar" class="row g-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productoId" value="@Model.Id" />
+                            <div class="col-4">
+                                <input class="form-control" type="number" min="1" max="@Model.Stock" name="cantidad" value="1" />
+                            </div>
+                            <div class="col-8">
+                                <button class="btn btn-primary w-100" type="submit">Agregar al carrito</button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

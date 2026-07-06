@@ -1,0 +1,31 @@
+@model CampoMarket.Web.Models.CategoriaFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Nueva categoria" : "Editar categoria";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="cm-card">
+            <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+            <form method="post" asp-controller="Admin" asp-action="GuardarCategoria">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Nombre"></label>
+                    <input class="form-control" asp-for="Nombre" />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" asp-for="Descripcion"></label>
+                    <textarea class="form-control" asp-for="Descripcion"></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Guardar</button>
+                <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="Categorias">Volver</a>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

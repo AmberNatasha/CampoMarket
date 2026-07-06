@@ -1,0 +1,45 @@
+@model IEnumerable<CampoMarket.Web.Models.AuditLogItem>
+@{
+    ViewData["Title"] = "Auditoria";
+    var errores = ViewBag.Errores as IEnumerable<CampoMarket.Web.Models.LogErrorItem> ?? Enumerable.Empty<CampoMarket.Web.Models.LogErrorItem>();
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <h1 class="section-title mb-4">Auditoria del sistema</h1>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    <h2 class="h4">Accesos</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>Fecha</th><th>Correo</th><th>Evento</th><th>IP</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr><td>@item.FechaUtc.ToLocalTime().ToString("g")</td><td>@item.Correo</td><td>@item.Evento</td><td>@item.Ip</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    <h2 class="h4">Errores</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>Fecha</th><th>Ruta</th><th>Mensaje</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in errores)
+                                {
+                                    <tr><td>@item.FechaUtc.ToLocalTime().ToString("g")</td><td>@item.Ruta</td><td>@item.Mensaje</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

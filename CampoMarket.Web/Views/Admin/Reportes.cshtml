@@ -1,0 +1,75 @@
+@model CampoMarket.Web.Models.ReportesViewModel
+@{
+    ViewData["Title"] = "Reportes";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <h1 class="section-title mb-4">Reportes y estadisticas</h1>
+        <form class="cm-card mb-4" method="get" asp-controller="Admin" asp-action="Reportes">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label" for="desde">Desde</label>
+                    <input class="form-control" type="date" id="desde" name="desde" value="@(Model.Desde?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="hasta">Hasta</label>
+                    <input class="form-control" type="date" id="hasta" name="hasta" value="@(Model.Hasta?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="categoriaId">Categoria ventas</label>
+                    <select class="form-select" id="categoriaId" name="categoriaId">
+                        <option value="">Todas</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <option value="@categoria.Id" selected="@(Model.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="productoId">Producto movimientos</label>
+                    <select class="form-select" id="productoId" name="productoId">
+                        <option value="">Todos</option>
+                        @foreach (var producto in Model.Productos)
+                        {
+                            <option value="@producto.Id" selected="@(Model.ProductoId == producto.Id)">@producto.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit">Actualizar reportes</button>
+                </div>
+            </div>
+        </form>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    <h2 class="h4">Productos mas vendidos</h2>
+                    <table class="table">
+                        <thead><tr><th>Producto</th><th>Cantidad</th><th>Total</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.MasVendidos)
+                            {
+                                <tr><td>@item.Producto</td><td>@item.Cantidad</td><td>$@item.Total.ToString("0.00")</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    <h2 class="h4">Movimientos de inventario</h2>
+                    <table class="table">
+                        <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Movimientos)
+                            {
+                                <tr><td>@item.FechaUtc.ToLocalTime().ToString("g")</td><td>@item.ProductoNombre</td><td>@item.Tipo</td><td>@item.Cantidad</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

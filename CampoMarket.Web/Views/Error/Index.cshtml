@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Algo salio mal";
+    var statusCode = ViewBag.StatusCode as int? ?? 500;
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="cm-card">
+            <span class="cm-kicker">Campo Market</span>
+            <h1 class="h3">No pudimos completar la accion</h1>
+            <p class="mb-3">Codigo: @statusCode</p>
+            <p class="text-muted">Intenta nuevamente o vuelve al inicio.</p>
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Volver al inicio</a>
+        </div>
+    </div>
+</section>
