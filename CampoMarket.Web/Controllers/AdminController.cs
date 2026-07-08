@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CampoMarket.Web.Controllers;
 
 [Authorize(Roles = RolesCampo.Admin)]
-public sealed class AdminController(CampoMarketStore store) : Controller
+public sealed class AdminController(CampoMarketStore store, IWebHostEnvironment environment) : Controller
 {
     [HttpGet("/admin")]
     public IActionResult Index()
@@ -63,7 +63,7 @@ public sealed class AdminController(CampoMarketStore store) : Controller
     public IActionResult NuevoProducto()
     {
         ViewBag.Categorias = store.Categorias;
-        return View("ProductoForm", new ProductoFormViewModel { StockMinimo = 5 });
+        return View("ProductoForm", new ProductoFormViewModel { StockMinimo = 5, Activo = true });
     }
 
     [HttpGet("/admin/productos/{id:int}/editar")]
@@ -81,14 +81,28 @@ public sealed class AdminController(CampoMarketStore store) : Controller
             Stock = product.Stock,
             StockMinimo = product.StockMinimo,
             CategoriaId = product.CategoriaId,
-            ImagenUrl = product.ImagenUrl
+            ImagenUrl = product.ImagenUrl,
+            Activo = product.Activo
         });
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost("/admin/productos/guardar")]
-    public IActionResult GuardarProducto(ProductoFormViewModel form)
+    public async Task<IActionResult> GuardarProducto(ProductoFormViewModel form)
     {
+        if (form.ImagenArchivo is not null)
+        {
+            var imageResult = await SaveProductImage(form.ImagenArchivo);
+            if (!imageResult.Ok)
+            {
+                ModelState.AddModelError(nameof(form.ImagenArchivo), imageResult.Message);
+            }
+            else
+            {
+                form.ImagenUrl = imageResult.Url!;
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             ViewBag.Categorias = store.Categorias;
@@ -98,6 +112,42 @@ public sealed class AdminController(CampoMarketStore store) : Controller
         store.SaveProduct(form);
         TempData["Flash"] = "Producto guardado.";
         return RedirectToAction(nameof(Productos));
+    }
+
+    private async Task<(bool Ok, string Message, string? Url)> SaveProductImage(IFormFile image)
+    {
+        if (image.Length == 0)
+        {
+            return (false, "Selecciona una imagen valida.", null);
+        }
+
+        if (image.Length > 5 * 1024 * 1024)
+        {
+            return (false, "La imagen no puede superar 5 MB.", null);
+        }
+
+        if (string.IsNullOrWhiteSpace(image.ContentType) || !image.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, "El archivo seleccionado debe ser una imagen.", null);
+        }
+
+        var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
+        var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        if (!allowedExtensions.Contains(extension))
+        {
+            return (false, "Usa una imagen JPG, PNG, GIF o WEBP.", null);
+        }
+
+        var uploadsRoot = Path.Combine(environment.WebRootPath, "uploads", "productos");
+        Directory.CreateDirectory(uploadsRoot);
+
+        var fileName = $"{Guid.NewGuid():N}{extension}";
+        var filePath = Path.Combine(uploadsRoot, fileName);
+
+        await using var stream = System.IO.File.Create(filePath);
+        await image.CopyToAsync(stream);
+
+        return (true, "", $"/uploads/productos/{fileName}");
     }
 
     [ValidateAntiForgeryToken]

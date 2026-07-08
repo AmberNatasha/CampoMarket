@@ -43,7 +43,7 @@ public sealed class CatalogoController(CampoMarketStore store) : Controller
                 p.Id,
                 p.Nombre,
                 p.Descripcion,
-                Precio = p.Precio.ToString("0.00"),
+                Precio = CurrencyFormatter.Colones(p.Precio),
                 p.Stock,
                 p.ImagenUrl,
                 PuedeComprar = User.IsInRole(RolesCampo.Cliente)

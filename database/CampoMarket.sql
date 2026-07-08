@@ -241,16 +241,6 @@ VALUES
 ('Carnes', 'Cortes frescos para cocina diaria'),
 ('Despensa', 'Basicos naturales para el hogar');
 
-INSERT INTO dbo.Producto (nombre_producto, descripcion, precio, stock, imagen_url, id_categoria, stock_minimo)
-VALUES
-('Manzana roja organica', 'Fruta crujiente seleccionada para loncheras y postres.', 1.25, 45, '/Images/Banner.jpg', 1, 10),
-('Banano de finca', 'Dulce, fresco y listo para batidos o desayuno.', 0.55, 70, '/Images/Banner.jpg', 1, 15),
-('Lechuga romana', 'Hojas verdes lavadas y empacadas para ensaladas.', 1.80, 20, '/Images/Banner.jpg', 2, 8),
-('Tomate artesanal', 'Tomate de temporada con buen cuerpo y sabor.', 1.10, 12, '/Images/Banner.jpg', 2, 10),
-('Queso fresco', 'Queso suave de produccion local.', 4.75, 16, '/Images/Banner.jpg', 3, 5),
-('Pechuga campesina', 'Corte fresco para preparaciones familiares.', 6.90, 9, '/Images/Banner.jpg', 4, 6),
-('Miel natural', 'Miel clara para bebidas, panes y marinados.', 5.40, 22, '/Images/Banner.jpg', 5, 5);
-
 INSERT INTO dbo.Carrito (id_usuario) VALUES (1);
 GO
 

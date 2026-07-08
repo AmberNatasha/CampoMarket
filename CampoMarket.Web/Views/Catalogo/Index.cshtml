@@ -57,7 +57,7 @@
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between gap-2">
                                 <h2 class="h5">@producto.Nombre</h2>
-                                <span class="price">$@producto.Precio.ToString("0.00")</span>
+                                <span class="price">@CurrencyFormatter.Colones(producto.Precio)</span>
                             </div>
                             <p class="text-muted">@producto.Descripcion</p>
                             <div class="small mb-3">Stock: @producto.Stock</div>
@@ -125,7 +125,7 @@
                             <div class="card-body d-flex flex-column">
                                 <div class="d-flex justify-content-between gap-2">
                                     <h2 class="h5">${producto.nombre}</h2>
-                                    <span class="price">$${producto.precio}</span>
+                                    <span class="price">${producto.precio}</span>
                                 </div>
                                 <p class="text-muted">${producto.descripcion}</p>
                                 <div class="small mb-3">Stock: ${producto.stock}</div>

@@ -285,4 +285,6 @@ public sealed class ProductoFormViewModel
     [Range(0, 100000)] public int StockMinimo { get; set; }
     [Required] public int CategoriaId { get; set; }
     public string ImagenUrl { get; set; } = "";
+    public IFormFile? ImagenArchivo { get; set; }
+    public bool Activo { get; set; } = true;
 }

@@ -9,6 +9,7 @@ builder.Logging.AddConsole();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<ICatalogRepository, SqlCatalogRepository>();
 builder.Services.AddSingleton<CampoMarketStore>();
 builder.Services.AddCors(options =>
 {
@@ -43,6 +44,7 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 app.Use(async (context, next) =>

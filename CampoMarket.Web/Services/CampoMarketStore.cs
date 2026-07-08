@@ -5,6 +5,7 @@ namespace CampoMarket.Web.Services;
 public sealed class CampoMarketStore
 {
     private readonly object _sync = new();
+    private readonly ICatalogRepository _catalogRepository;
     private readonly List<Usuario> _usuarios = [];
     private readonly List<DireccionCliente> _direcciones = [];
     private readonly List<Categoria> _categorias = [];
@@ -21,8 +22,9 @@ public sealed class CampoMarketStore
     private int _productoId = 1;
     private int _pedidoId = 1;
 
-    public CampoMarketStore()
+    public CampoMarketStore(ICatalogRepository catalogRepository)
     {
+        _catalogRepository = catalogRepository;
         Seed();
     }
 
@@ -259,9 +261,10 @@ public sealed class CampoMarketStore
                     StockMinimo = form.StockMinimo,
                     CategoriaId = form.CategoriaId,
                     ImagenUrl = string.IsNullOrWhiteSpace(form.ImagenUrl) ? "/Images/Banner.jpg" : form.ImagenUrl,
-                    Activo = true,
+                    Activo = form.Activo,
                     ActualizadoUtc = DateTime.UtcNow
                 });
+                SaveCatalogState();
                 return;
             }
 
@@ -273,7 +276,9 @@ public sealed class CampoMarketStore
             product.StockMinimo = form.StockMinimo;
             product.CategoriaId = form.CategoriaId;
             product.ImagenUrl = string.IsNullOrWhiteSpace(form.ImagenUrl) ? product.ImagenUrl : form.ImagenUrl;
+            product.Activo = form.Activo;
             product.ActualizadoUtc = DateTime.UtcNow;
+            SaveCatalogState();
         }
     }
 
@@ -290,6 +295,8 @@ public sealed class CampoMarketStore
             var product = _productos.FirstOrDefault(p => p.Id == id);
             if (product is null) return (false, "Producto no encontrado.");
             product.Activo = false;
+            product.ActualizadoUtc = DateTime.UtcNow;
+            SaveCatalogState();
             return (true, "Producto desactivado.");
         }
     }
@@ -298,12 +305,14 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            if (cantidad <= 0) return (false, "El ajuste debe ser positivo.");
+            if (cantidad == 0) return (false, "El ajuste no puede ser cero.");
             var product = _productos.FirstOrDefault(p => p.Id == id);
             if (product is null) return (false, "Producto no encontrado.");
+            if (product.Stock + cantidad < 0) return (false, "El ajuste dejaria el stock en negativo.");
             product.Stock += cantidad;
             product.ActualizadoUtc = DateTime.UtcNow;
             _movimientos.Add(new MovimientoInventario { ProductoId = id, ProductoNombre = product.Nombre, Tipo = "Ajuste manual", Cantidad = cantidad, Motivo = motivo });
+            SaveCatalogState();
             return (true, "Stock actualizado.");
         }
     }
@@ -466,6 +475,7 @@ public sealed class CampoMarketStore
             order.Historial.Add(new HistorialEstado { Estado = EstadosPedido.Pendiente });
             _pedidos.Add(order);
             cart.Clear();
+            SaveCatalogState();
             return (true, $"Pedido {order.Numero} generado.", Clone(order));
         }
     }
@@ -487,6 +497,7 @@ public sealed class CampoMarketStore
                 _movimientos.Add(new MovimientoInventario { ProductoId = product.Id, ProductoNombre = product.Nombre, Tipo = "Reintegro por cancelacion", Cantidad = detail.Cantidad, Motivo = order.Numero });
             }
 
+            SaveCatalogState();
             return (true, "Pedido cancelado y stock reintegrado.");
         }
     }
@@ -596,6 +607,7 @@ public sealed class CampoMarketStore
             if (form.Id == 0)
             {
                 _categorias.Add(new Categoria { Id = _categoriaId++, Nombre = form.Nombre.Trim(), Descripcion = form.Descripcion.Trim(), Activa = true });
+                SaveCatalogState();
                 return (true, "Categoria creada.");
             }
 
@@ -604,6 +616,7 @@ public sealed class CampoMarketStore
             category.Nombre = form.Nombre.Trim();
             category.Descripcion = form.Descripcion.Trim();
             category.Activa = true;
+            SaveCatalogState();
             return (true, "Categoria actualizada.");
         }
     }
@@ -620,6 +633,7 @@ public sealed class CampoMarketStore
             var category = _categorias.FirstOrDefault(c => c.Id == id);
             if (category is null) return (false, "Categoria no encontrada.");
             category.Activa = false;
+            SaveCatalogState();
             return (true, "Categoria desactivada.");
         }
     }
@@ -652,23 +666,42 @@ public sealed class CampoMarketStore
             Predeterminada = true
         });
 
-        foreach (var name in new[] { "Frutas", "Verduras", "Lacteos", "Carnes", "Despensa" })
-        {
-            _categorias.Add(new Categoria { Id = _categoriaId++, Nombre = name, Descripcion = $"Productos de categoria {name.ToLowerInvariant()}" });
-        }
+        LoadCatalogState();
 
-        AddSeedProduct("Manzana roja organica", "Fruta crujiente seleccionada para loncheras y postres.", 1, 1.25m, 45, 10, "/Images/Banner.jpg");
-        AddSeedProduct("Banano de finca", "Dulce, fresco y listo para batidos o desayuno.", 1, 0.55m, 70, 15, "/Images/Banner.jpg");
-        AddSeedProduct("Lechuga romana", "Hojas verdes lavadas y empacadas para ensaladas.", 2, 1.80m, 20, 8, "/Images/Banner.jpg");
-        AddSeedProduct("Tomate artesanal", "Tomate de temporada con buen cuerpo y sabor.", 2, 1.10m, 12, 10, "/Images/Banner.jpg");
-        AddSeedProduct("Queso fresco", "Queso suave de produccion local.", 3, 4.75m, 16, 5, "/Images/Banner.jpg");
-        AddSeedProduct("Pechuga campesina", "Corte fresco para preparaciones familiares.", 4, 6.90m, 9, 6, "/Images/Banner.jpg");
-        AddSeedProduct("Miel natural", "Miel clara para bebidas, panes y marinados.", 5, 5.40m, 22, 5, "/Images/Banner.jpg");
+        if (_categorias.Count == 0)
+        {
+            foreach (var name in new[] { "Frutas", "Verduras", "Lacteos", "Carnes", "Despensa" })
+            {
+                _categorias.Add(new Categoria { Id = _categoriaId++, Nombre = name, Descripcion = $"Productos de categoria {name.ToLowerInvariant()}" });
+            }
+
+            SaveCatalogState();
+        }
     }
 
-    private void AddSeedProduct(string nombre, string descripcion, int categoriaId, decimal precio, int stock, int minimo, string imagen)
+    private void LoadCatalogState()
     {
-        _productos.Add(new Producto { Id = _productoId++, Nombre = nombre, Descripcion = descripcion, CategoriaId = categoriaId, Precio = precio, Stock = stock, StockMinimo = minimo, ImagenUrl = imagen });
+        var state = _catalogRepository.Load();
+
+        _categorias.Clear();
+        _categorias.AddRange(state.Categorias);
+        _productos.Clear();
+        _productos.AddRange(state.Productos);
+        _movimientos.Clear();
+        _movimientos.AddRange(state.Movimientos);
+
+        _categoriaId = _categorias.Count == 0 ? 1 : _categorias.Max(c => c.Id) + 1;
+        _productoId = _productos.Count == 0 ? 1 : _productos.Max(p => p.Id) + 1;
+    }
+
+    private void SaveCatalogState()
+    {
+        _catalogRepository.Save(new CatalogState
+        {
+            Categorias = _categorias,
+            Productos = _productos,
+            Movimientos = _movimientos
+        });
     }
 
     private static Producto Clone(Producto p) => new()

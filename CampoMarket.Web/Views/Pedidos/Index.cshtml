@@ -16,7 +16,7 @@
                             <tr>
                                 <td>@pedido.Numero</td>
                                 <td>@pedido.FechaUtc.ToLocalTime().ToString("g")</td>
-                                <td>$@pedido.Total.ToString("0.00")</td>
+                                <td>@CurrencyFormatter.Colones(pedido.Total)</td>
                                 <td><span class="badge status-@pedido.Estado.ToLowerInvariant()">@pedido.Estado</span></td>
                                 <td><a class="btn btn-outline-primary" asp-controller="Pedidos" asp-action="Detalle" asp-route-id="@pedido.Id">Detalle</a></td>
                             </tr>

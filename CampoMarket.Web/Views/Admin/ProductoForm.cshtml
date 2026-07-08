@@ -7,9 +7,11 @@
     <div class="container px-4 px-lg-5">
         <div class="cm-card">
             <h1 class="h3 mb-4">@ViewData["Title"]</h1>
-            <form method="post" asp-controller="Admin" asp-action="GuardarProducto">
+            <form method="post" asp-controller="Admin" asp-action="GuardarProducto" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ImagenUrl" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label" asp-for="Nombre"></label>
@@ -18,6 +20,7 @@
                     <div class="col-md-3">
                         <label class="form-label" asp-for="Precio"></label>
                         <input class="form-control" asp-for="Precio" />
+                        <div class="form-text">Monto en colones.</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label" asp-for="CategoriaId">Categoria</label>
@@ -41,8 +44,19 @@
                         <input class="form-control" asp-for="StockMinimo" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" asp-for="ImagenUrl">Imagen URL</label>
-                        <input class="form-control" asp-for="ImagenUrl" />
+                        <label class="form-label" asp-for="ImagenArchivo">Imagen del producto</label>
+                        <input class="form-control" asp-for="ImagenArchivo" type="file" accept="image/*" />
+                        <span asp-validation-for="ImagenArchivo" class="text-danger"></span>
+                        @if (!string.IsNullOrWhiteSpace(Model.ImagenUrl))
+                        {
+                            <div class="form-text">Imagen actual: @Model.ImagenUrl</div>
+                        }
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" asp-for="Activo" />
+                            <label class="form-check-label" asp-for="Activo">Producto activo y visible en catalogo</label>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-4 d-flex gap-2">

@@ -12,21 +12,27 @@
         <div class="cm-card">
             <div class="table-responsive">
                 <table class="table align-middle">
-                    <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Ajuste</th><th></th></tr></thead>
+                    <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Ajuste de stock</th><th></th></tr></thead>
                     <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Todavia no hay productos. Crea el primero desde "Nuevo producto".</td>
+                            </tr>
+                        }
                         @foreach (var producto in Model)
                         {
                             <tr class="@(producto.Stock <= producto.StockMinimo ? "stock-low" : "")">
                                 <td>@producto.Nombre</td>
-                                <td>$@producto.Precio.ToString("0.00")</td>
+                                <td>@CurrencyFormatter.Colones(producto.Precio)</td>
                                 <td>@producto.Stock / min @producto.StockMinimo</td>
                                 <td>@(producto.Activo ? "Activo" : "Inactivo")</td>
                                 <td>
                                     <form method="post" asp-controller="Admin" asp-action="AjustarStock" asp-route-id="@producto.Id" class="d-flex gap-2">
                                         @Html.AntiForgeryToken()
-                                        <input class="form-control stock-input" type="number" name="cantidad" min="1" value="1" />
+                                        <input class="form-control stock-input" type="number" name="cantidad" value="1" />
                                         <input class="form-control" name="motivo" placeholder="Motivo" />
-                                        <button class="btn btn-outline-primary" type="submit">Sumar</button>
+                                        <button class="btn btn-outline-primary" type="submit">Ajustar</button>
                                     </form>
                                 </td>
                                 <td class="text-end">

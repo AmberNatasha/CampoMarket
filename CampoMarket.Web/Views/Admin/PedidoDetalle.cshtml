@@ -17,7 +17,7 @@
                 </div>
                 <div class="text-lg-end">
                     <span class="badge status-@Model.Estado.ToLowerInvariant()">@Model.Estado</span>
-                    <div class="fs-4 fw-bold">$@Model.Total.ToString("0.00")</div>
+                    <div class="fs-4 fw-bold">@CurrencyFormatter.Colones(Model.Total)</div>
                     @if (Model.Estado is EstadosPedido.Pendiente or EstadosPedido.Preparando or EstadosPedido.Listo)
                     {
                         <form class="mt-2" method="post" asp-controller="Admin" asp-action="Avanzar" asp-route-id="@Model.Id">
@@ -36,7 +36,7 @@
                         <tbody>
                             @foreach (var item in Model.Detalles)
                             {
-                                <tr><td>@item.ProductoNombre</td><td>@item.Cantidad</td><td>$@item.PrecioUnitario.ToString("0.00")</td><td>$@item.Subtotal.ToString("0.00")</td></tr>
+                                <tr><td>@item.ProductoNombre</td><td>@item.Cantidad</td><td>@CurrencyFormatter.Colones(item.PrecioUnitario)</td><td>@CurrencyFormatter.Colones(item.Subtotal)</td></tr>
                             }
                         </tbody>
                     </table>

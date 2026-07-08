@@ -27,7 +27,7 @@
                                     {
                                         <tr>
                                             <td>@item.Producto.Nombre</td>
-                                            <td>$@item.Producto.Precio.ToString("0.00")</td>
+                                            <td>@CurrencyFormatter.Colones(item.Producto.Precio)</td>
                                             <td>
                                                 <form method="post" asp-controller="Carrito" asp-action="Actualizar" class="d-flex gap-2">
                                                     @Html.AntiForgeryToken()
@@ -36,7 +36,7 @@
                                                     <button class="btn btn-outline-primary" type="submit"><i class="bi bi-arrow-repeat"></i></button>
                                                 </form>
                                             </td>
-                                            <td>$@item.Subtotal.ToString("0.00")</td>
+                                            <td>@CurrencyFormatter.Colones(item.Subtotal)</td>
                                             <td>
                                                 <form method="post" asp-controller="Carrito" asp-action="Eliminar" onsubmit="return confirm('Eliminar este producto?')">
                                                     @Html.AntiForgeryToken()
@@ -60,7 +60,7 @@
                         <h2 class="h4">Resumen</h2>
                         <div class="d-flex justify-content-between fs-5 mb-3">
                             <strong>Total</strong>
-                            <strong>$@Model.Total.ToString("0.00")</strong>
+                            <strong>@CurrencyFormatter.Colones(Model.Total)</strong>
                         </div>
                         <form method="post" asp-controller="Carrito" asp-action="Confirmar">
                             @Html.AntiForgeryToken()

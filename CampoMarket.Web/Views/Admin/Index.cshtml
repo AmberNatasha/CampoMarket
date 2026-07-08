@@ -14,7 +14,7 @@
         </div>
         <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="cm-card metric"><span>Pedidos de hoy</span><strong>@ViewBag.PedidosDia</strong></div></div>
-            <div class="col-md-4"><div class="cm-card metric"><span>Ingresos de hoy</span><strong>$@(((decimal)ViewBag.IngresosDia).ToString("0.00"))</strong></div></div>
+            <div class="col-md-4"><div class="cm-card metric"><span>Ingresos de hoy</span><strong>@CurrencyFormatter.Colones((decimal)ViewBag.IngresosDia)</strong></div></div>
             <div class="col-md-4"><div class="cm-card metric"><span>Stock bajo</span><strong>@ViewBag.StockBajo</strong></div></div>
         </div>
         <div class="cm-card">
