@@ -1,14 +1,16 @@
 using System.Security.Claims;
 using CampoMarket.Web.Models;
 using CampoMarket.Web.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampoMarket.Web.Controllers;
 
-public sealed class CuentaController(CampoMarketStore store) : Controller
+public sealed class CuentaController(
+    IUserService usuarios,
+    IAddressService direcciones,
+    IPasswordResetService passwords,
+    IAuthSessionService sesiones) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View("~/Views/Home/Login.cshtml");
@@ -18,7 +20,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
     public async Task<IActionResult> Login(string correo, string password)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-        var result = store.Login(correo, password, ip);
+        var result = usuarios.Login(correo, password, ip);
         if (!result.Ok || result.User is null)
         {
             ViewBag.Mensaje = result.Message;
@@ -26,15 +28,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View("~/Views/Home/Login.cshtml");
         }
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, result.User.Id.ToString()),
-            new(ClaimTypes.Name, result.User.Nombre),
-            new(ClaimTypes.Email, result.User.Correo),
-            new(ClaimTypes.Role, result.User.Rol)
-        };
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+        await sesiones.SignInAsync(HttpContext, result.User);
         return result.User.Rol == RolesCampo.Admin ? RedirectToAction("Index", "Admin") : RedirectToAction("Index", "Catalogo");
     }
 
@@ -50,7 +44,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View("~/Views/Home/Registro.cshtml", model);
         }
 
-        var result = store.Register(model.Nombre, model.Correo, model.Password, model.Telefono, model.Direccion);
+        var result = usuarios.Register(model.Nombre, model.Correo, model.Password, model.Telefono, model.Direccion);
         if (!result.Ok)
         {
             ModelState.AddModelError(nameof(model.Correo), result.Message);
@@ -66,7 +60,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
     [HttpPost("/logout")]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync();
+        await sesiones.SignOutAsync(HttpContext);
         return RedirectToAction("Index", "Home");
     }
 
@@ -74,7 +68,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
     [HttpGet("/perfil")]
     public IActionResult Perfil()
     {
-        var user = store.FindUser(UserId());
+        var user = usuarios.FindUser(UserId());
         if (user is null) return NotFound();
         return View(new PerfilViewModel
         {
@@ -94,19 +88,19 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View(model);
         }
 
-        var result = store.UpdateProfile(UserId(), model.Nombre, model.Telefono, model.Direccion);
+        var result = usuarios.UpdateProfile(UserId(), model.Nombre, model.Telefono, model.Direccion);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(Perfil));
     }
 
     [Authorize]
-    [HttpGet("/perfil/contrasena")]
+    [HttpGet("/perfil/contraseña")]
     public IActionResult CambiarPassword() => View(new CambiarPasswordViewModel());
 
     [Authorize]
     [ValidateAntiForgeryToken]
-    [HttpPost("/perfil/contrasena")]
+    [HttpPost("/perfil/contraseña")]
     public IActionResult CambiarPassword(CambiarPasswordViewModel model)
     {
         if (!ModelState.IsValid)
@@ -114,7 +108,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View(model);
         }
 
-        var result = store.ChangePassword(UserId(), model.PasswordActual, model.PasswordNuevo);
+        var result = usuarios.ChangePassword(UserId(), model.PasswordActual, model.PasswordNuevo);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(CambiarPassword));
@@ -122,7 +116,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
 
     [Authorize(Roles = RolesCampo.Cliente)]
     [HttpGet("/perfil/direcciones")]
-    public IActionResult Direcciones() => View(store.GetAddresses(UserId()));
+    public IActionResult Direcciones() => View(direcciones.GetAddresses(UserId()));
 
     [Authorize(Roles = RolesCampo.Cliente)]
     [HttpGet("/perfil/direcciones/nueva")]
@@ -132,7 +126,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
     [HttpGet("/perfil/direcciones/{id:int}/editar")]
     public IActionResult EditarDireccion(int id)
     {
-        var address = store.FindAddress(UserId(), id);
+        var address = direcciones.FindAddress(UserId(), id);
         if (address is null) return NotFound();
         return View("DireccionForm", new DireccionFormViewModel
         {
@@ -156,7 +150,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View("DireccionForm", model);
         }
 
-        var result = store.SaveAddress(UserId(), model);
+        var result = direcciones.SaveAddress(UserId(), model);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(Direcciones));
@@ -167,7 +161,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
     [HttpPost("/perfil/direcciones/{id:int}/eliminar")]
     public IActionResult EliminarDireccion(int id)
     {
-        var result = store.DeleteAddress(UserId(), id);
+        var result = direcciones.DeleteAddress(UserId(), id);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(Direcciones));
@@ -185,7 +179,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View("~/Views/Home/Recuperar.cshtml", model);
         }
 
-        var result = store.RequestPasswordReset(model.Correo);
+        var result = passwords.RequestPasswordReset(model.Correo);
         ViewBag.Mensaje = result.Message;
         ViewBag.Token = result.Token;
         return View("~/Views/Home/Recuperar.cshtml", model);
@@ -203,7 +197,7 @@ public sealed class CuentaController(CampoMarketStore store) : Controller
             return View(model);
         }
 
-        var result = store.ResetPassword(model.Token, model.PasswordNuevo);
+        var result = passwords.ResetPassword(model.Token, model.PasswordNuevo);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return result.Ok ? RedirectToAction(nameof(Login)) : View(model);

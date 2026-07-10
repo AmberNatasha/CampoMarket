@@ -1,6 +1,6 @@
 @model CampoMarket.Web.Models.RestablecerPasswordViewModel
 @{
-    ViewData["Title"] = "Restablecer contrasena";
+    ViewData["Title"] = "Restablecer contraseña";
 }
 
 <section class="py-5">
@@ -8,16 +8,16 @@
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="cm-card">
-                    <h1 class="h3 mb-4">Restablecer contrasena</h1>
+                    <h1 class="h3 mb-4">Restablecer contraseña</h1>
                     <form method="post" asp-controller="Cuenta" asp-action="Restablecer">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="Token" />
                         <div class="mb-4">
-                            <label class="form-label" asp-for="PasswordNuevo">Nueva contrasena</label>
+                            <label class="form-label" asp-for="PasswordNuevo">Nueva contraseña</label>
                             <input class="form-control" asp-for="PasswordNuevo" type="password" />
                             <span asp-validation-for="PasswordNuevo" class="text-danger"></span>
                         </div>
-                        <button class="btn btn-primary w-100" type="submit">Guardar nueva contrasena</button>
+                        <button class="btn btn-primary w-100" type="submit">Guardar nueva contraseña</button>
                     </form>
                 </div>
             </div>

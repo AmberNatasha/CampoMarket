@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="CampoMarket.Web/CampoMarket.Web.csproj" />
+  <Project Path="CampoMarketApi/CampoMarketApi.csproj" Id="e82581e9-b62e-4854-a115-8b47dfea89ce" />
 </Solution>

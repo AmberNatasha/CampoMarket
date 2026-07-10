@@ -10,6 +10,7 @@
             <form method="post" asp-controller="Admin" asp-action="GuardarCategoria">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                 <div class="mb-3">
                     <label class="form-label" asp-for="Nombre"></label>
                     <input class="form-control" asp-for="Nombre" />

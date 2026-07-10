@@ -78,7 +78,7 @@
                 </div>
             }
         </div>
-        <nav class="mt-4" aria-label="Paginacion catalogo">
+        <nav class="mt-4" aria-label="Paginacion Catalogo">
             <ul class="pagination justify-content-center">
                 @for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
                 {
@@ -130,7 +130,7 @@
                                 <p class="text-muted">${producto.descripcion}</p>
                                 <div class="small mb-3">Stock: ${producto.stock}</div>
                                 <div class="mt-auto d-flex gap-2">
-                                    <a class="btn btn-outline-primary flex-fill" href="/catalogo/producto/${producto.id}">Ver</a>
+                                    <a class="btn btn-outline-primary flex-fill" href="/Catalogo/producto/${producto.id}">Ver</a>
                                     ${buy}
                                 </div>
                             </div>
@@ -141,7 +141,7 @@
 
             const search = () => {
                 const data = new URLSearchParams(new FormData(form));
-                fetch(`/catalogo/buscar-json?${data.toString()}`)
+                fetch(`/Catalogo/buscar-json?${data.toString()}`)
                     .then(response => response.json())
                     .then(payload => render(payload.productos));
             };

@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 namespace CampoMarket.Web.Controllers;
 
 [Authorize(Roles = RolesCampo.Cliente)]
-public sealed class CarritoController(CampoMarketStore store) : Controller
+public sealed class CarritoController(ICartService carrito, IAddressService direcciones, IOrderService pedidos) : Controller
 {
     [HttpGet("/carrito")]
     public IActionResult Index()
     {
         return View(new CarritoViewModel
         {
-            Lineas = store.GetCart(UserId()),
-            Direcciones = store.GetAddresses(UserId())
+            Lineas = carrito.GetCart(UserId()),
+            Direcciones = direcciones.GetAddresses(UserId())
         });
     }
 
@@ -23,7 +23,7 @@ public sealed class CarritoController(CampoMarketStore store) : Controller
     [HttpPost("/carrito/agregar")]
     public IActionResult Agregar(int productoId, int cantidad = 1)
     {
-        var result = store.AddToCart(UserId(), productoId, cantidad);
+        var result = carrito.AddToCart(UserId(), productoId, cantidad);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction("Index", "Catalogo");
@@ -33,7 +33,7 @@ public sealed class CarritoController(CampoMarketStore store) : Controller
     [HttpPost("/carrito/actualizar")]
     public IActionResult Actualizar(int productoId, int cantidad)
     {
-        store.UpdateCart(UserId(), productoId, cantidad);
+        carrito.UpdateCart(UserId(), productoId, cantidad);
         return RedirectToAction(nameof(Index));
     }
 
@@ -41,7 +41,7 @@ public sealed class CarritoController(CampoMarketStore store) : Controller
     [HttpPost("/carrito/eliminar")]
     public IActionResult Eliminar(int productoId)
     {
-        store.RemoveFromCart(UserId(), productoId);
+        carrito.RemoveFromCart(UserId(), productoId);
         TempData["Flash"] = "Producto eliminado del carrito.";
         return RedirectToAction(nameof(Index));
     }
@@ -50,7 +50,7 @@ public sealed class CarritoController(CampoMarketStore store) : Controller
     [HttpPost("/carrito/vaciar")]
     public IActionResult Vaciar()
     {
-        store.ClearCart(UserId());
+        carrito.ClearCart(UserId());
         TempData["Flash"] = "Carrito vaciado.";
         return RedirectToAction(nameof(Index));
     }
@@ -59,7 +59,7 @@ public sealed class CarritoController(CampoMarketStore store) : Controller
     [HttpPost("/carrito/confirmar")]
     public IActionResult Confirmar(string tipoEntrega, string direccionEntrega)
     {
-        var result = store.CreateOrder(UserId(), tipoEntrega, direccionEntrega);
+        var result = pedidos.CreateOrder(UserId(), tipoEntrega, direccionEntrega);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return result.Ok ? RedirectToAction("Detalle", "Pedidos", new { id = result.Pedido!.Id }) : RedirectToAction(nameof(Index));

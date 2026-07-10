@@ -1,6 +1,6 @@
 # Campo Market - Cobertura de HU del prototipo
 
-Este documento resume las historias cubiertas en el prototipo MVC actual. La persistencia productiva queda preparada por `CampoMarket.Web/SCRIPTS/ScriptInicial.txt`; la app usa datos en memoria para probar rapido el flujo completo.
+Este documento resume las historias cubiertas en la solucion MVC actual. La persistencia se realiza contra SQL Server mediante la cadena de conexion configurada en `CampoMarket.Web/appsettings.json`. Los scripts oficiales viven en `database/`.
 
 ## Funcionales
 
@@ -25,7 +25,7 @@ Este documento resume las historias cubiertas en el prototipo MVC actual. La per
 | US-17 Resumen carrito | Implementada | `/carrito` |
 | US-18 Vaciar carrito | Implementada | `/carrito` |
 | US-19 Metodo entrega | Implementada | `/carrito` |
-| US-20 Confirmar pedido y descontar stock | Implementada en memoria transaccional | `/carrito` |
+| US-20 Confirmar pedido y descontar stock | Implementada | `/carrito` |
 | US-21 Historial cliente | Implementada | `/pedidos` |
 | US-22 Detalle pedido cliente | Implementada | `/pedidos/{id}` |
 | US-23 Cancelar pedido pendiente | Implementada | `/pedidos/{id}` |
@@ -49,15 +49,15 @@ Este documento resume las historias cubiertas en el prototipo MVC actual. La per
 | NF | Estado | Evidencia |
 | --- | --- | --- |
 | NF-01 Seguridad web | Preparada | HTTPS redirect, cookie auth, CORS local, CSP, X-Frame-Options |
-| NF-02 Validacion y consultas seguras | Preparada | Validaciones server/client, script con constraints; futura BD via repositorios parametrizados |
+| NF-02 Validacion y consultas seguras | Preparada | Validaciones server/client, constraints SQL y repositorios parametrizados |
 | NF-03 Intentos fallidos | Implementada | Bloqueo tras 5 intentos y `/admin/auditoria` |
 | NF-04 Rendimiento | Preparada | Indices SQL, paginacion catalogo/pedidos, filtros |
-| NF-05 Transacciones | Preparada | Flujo de pedido/cancelacion atomico en memoria; script listo para transaccion SQL |
-| NF-06 Concurrencia | Preparada | Store con lock y script `scripts/load-smoke.ps1` |
+| NF-05 Transacciones | Preparada | Operaciones protegidas en servicios y persistencia SQL |
+| NF-06 Concurrencia | Preparada | Servicios con sincronizacion y script `scripts/load-smoke.ps1` |
 | NF-07 Responsive | Implementada | Bootstrap y estilos responsivos |
 | NF-08 Marca | Implementada | Paleta, fuentes y navegacion Campo Market |
 | NF-09 Mensajes claros | Implementada | TempData alerts y validaciones inline |
-| NF-10 Tres capas | Preparada | Controllers, Services, Models; siguiente paso natural: Repositories SQL |
-| NF-11 3FN y scripts versionados | Implementada | `CampoMarket.Web/SCRIPTS/ScriptInicial.txt` |
+| NF-10 Tres capas | Preparada | Controllers, Services, Models y repositorio SQL |
+| NF-11 3FN y scripts versionados | Implementada | `database/CampoMarket.sql` |
 | NF-12 Errores globales | Implementada | `ErrorController`, vista amigable y `/admin/auditoria` |
 | NF-13 Instalacion | Implementada | README y scripts locales |

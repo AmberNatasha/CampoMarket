@@ -33,7 +33,7 @@
 }
 
 html {
-  min-height: 100%;
+  height: 100%;
   font-size: 14px;
 }
 
@@ -44,12 +44,23 @@ html {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   margin: 0;
   color: var(--cm-charcoal);
   background: var(--cm-cream);
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   line-height: 1.6;
+}
+
+header,
+footer {
+  flex-shrink: 0;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 h1,
@@ -457,22 +468,24 @@ a:focus {
 }
 
 .cm-footer {
-  color: rgba(255, 253, 248, 0.84);
-  background: var(--cm-charcoal);
-  border-top: 4px solid var(--cm-sage);
+    color: rgba(255, 253, 248, 0.84);
+    background: var(--cm-charcoal);
+    border-top: 4px solid var(--cm-sage);
+    margin-top: auto;
 }
 
 .cm-footer a {
-  color: var(--cm-sage);
+        color: var(--cm-sage);
+        
 }
 
-.cm-footer a:hover,
-.cm-footer a:focus {
-  color: var(--cm-honey);
+ .cm-footer a:hover,
+    .cm-footer a:focus {
+        color: var(--cm-honey);
 }
 
 .text-muted {
-  color: rgba(47, 47, 47, 0.68) !important;
+    color: rgba(47, 47, 47, 0.68) !important;
 }
 
 @media (max-width: 991.98px) {

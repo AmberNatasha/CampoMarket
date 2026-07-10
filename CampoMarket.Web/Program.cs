@@ -10,7 +10,20 @@ builder.Logging.AddConsole();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<ICatalogRepository, SqlCatalogRepository>();
+builder.Services.AddSingleton<IUserRepository, SqlUserRepository>();
+builder.Services.AddSingleton<SqlAccountService>();
+builder.Services.AddSingleton<SqlCommerceService>();
 builder.Services.AddSingleton<CampoMarketStore>();
+builder.Services.AddSingleton<IUserService>(sp => sp.GetRequiredService<SqlAccountService>());
+builder.Services.AddSingleton<IPasswordResetService>(sp => sp.GetRequiredService<SqlAccountService>());
+builder.Services.AddSingleton<ICatalogService>(sp => sp.GetRequiredService<CampoMarketStore>());
+builder.Services.AddSingleton<ICartService>(sp => sp.GetRequiredService<SqlCommerceService>());
+builder.Services.AddSingleton<IAddressService>(sp => sp.GetRequiredService<SqlAccountService>());
+builder.Services.AddSingleton<IOrderService>(sp => sp.GetRequiredService<SqlCommerceService>());
+builder.Services.AddSingleton<IReportService>(sp => sp.GetRequiredService<SqlCommerceService>());
+builder.Services.AddSingleton<IAuditService>(sp => sp.GetRequiredService<SqlAccountService>());
+builder.Services.AddScoped<IProductImageService, ProductImageService>();
+builder.Services.AddScoped<IAuthSessionService, AuthSessionService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CampoMarketLocal", policy =>

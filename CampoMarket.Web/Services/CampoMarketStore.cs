@@ -2,40 +2,50 @@ using CampoMarket.Web.Models;
 
 namespace CampoMarket.Web.Services;
 
-public sealed class CampoMarketStore
+public sealed class CampoMarketStore :
+    ICatalogService
 {
     private readonly object _sync = new();
     private readonly ICatalogRepository _catalogRepository;
-    private readonly List<Usuario> _usuarios = [];
-    private readonly List<DireccionCliente> _direcciones = [];
+    private readonly IUserRepository _userRepository;
     private readonly List<Categoria> _categorias = [];
     private readonly List<Producto> _productos = [];
     private readonly List<Pedido> _pedidos = [];
     private readonly List<MovimientoInventario> _movimientos = [];
-    private readonly List<AuditLogItem> _auditLogs = [];
-    private readonly List<LogErrorItem> _errorLogs = [];
-    private readonly List<PasswordResetToken> _resetTokens = [];
     private readonly Dictionary<int, List<CarritoItem>> _carritos = [];
-    private int _usuarioId = 1;
-    private int _direccionId = 1;
     private int _categoriaId = 1;
     private int _productoId = 1;
     private int _pedidoId = 1;
 
-    public CampoMarketStore(ICatalogRepository catalogRepository)
+    public CampoMarketStore(ICatalogRepository catalogRepository, IUserRepository userRepository)
     {
         _catalogRepository = catalogRepository;
+        _userRepository = userRepository;
         Seed();
     }
 
     public IReadOnlyList<Categoria> Categorias
     {
-        get { lock (_sync) return _categorias.ToList(); }
+        get
+        {
+            lock (_sync)
+            {
+                LoadCatalogState();
+                return _categorias.Select(Clone).ToList();
+            }
+        }
     }
 
     public IReadOnlyList<Producto> Productos
     {
-        get { lock (_sync) return _productos.Select(Clone).ToList(); }
+        get
+        {
+            lock (_sync)
+            {
+                LoadCatalogState();
+                return _productos.Select(Clone).ToList();
+            }
+        }
     }
 
     public IReadOnlyList<Pedido> Pedidos
@@ -45,52 +55,72 @@ public sealed class CampoMarketStore
 
     public IReadOnlyList<MovimientoInventario> Movimientos
     {
-        get { lock (_sync) return _movimientos.ToList(); }
+        get
+        {
+            lock (_sync)
+            {
+                LoadCatalogState();
+                return _movimientos.Select(Clone).ToList();
+            }
+        }
     }
 
     public IReadOnlyList<AuditLogItem> AuditLogs
     {
-        get { lock (_sync) return _auditLogs.ToList(); }
+        get { lock (_sync) return _userRepository.GetAuditLogs(); }
     }
 
     public IReadOnlyList<LogErrorItem> ErrorLogs
     {
-        get { lock (_sync) return _errorLogs.ToList(); }
+        get { lock (_sync) return _userRepository.GetErrorLogs(); }
+    }
+
+    public IReadOnlyList<Usuario> Clientes
+    {
+        get { lock (_sync) return _userRepository.GetClients(); }
     }
 
     public Usuario? FindUserByEmail(string correo)
     {
-        lock (_sync) return _usuarios.FirstOrDefault(u => u.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase));
+        lock (_sync) return _userRepository.FindByEmail(correo);
     }
 
     public Usuario? FindUser(int id)
     {
-        lock (_sync) return _usuarios.FirstOrDefault(u => u.Id == id);
+        lock (_sync) return _userRepository.FindById(id);
     }
 
     public (bool Ok, string Message, Usuario? User) Register(string nombre, string correo, string password, string telefono, string direccion)
     {
         lock (_sync)
         {
-            if (_usuarios.Any(u => u.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase)))
+            if (_userRepository.FindByEmail(correo) is not null)
             {
                 return (false, "Ese correo ya esta registrado.", null);
             }
 
             var user = new Usuario
             {
-                Id = _usuarioId++,
                 Nombre = nombre.Trim(),
                 Correo = correo.Trim().ToLowerInvariant(),
                 Telefono = telefono.Trim(),
-                Direccion = direccion.Trim(),
                 Rol = RolesCampo.Cliente,
                 PasswordHash = PasswordService.Hash(password)
             };
-            _usuarios.Add(user);
+
+            user.Id = _userRepository.CreateUser(user);
             if (!string.IsNullOrWhiteSpace(direccion))
             {
-                _direcciones.Add(new DireccionCliente { Id = _direccionId++, UsuarioId = user.Id, Alias = "Casa", Detalle = direccion, Predeterminada = true });
+                _userRepository.CreateAddress(new DireccionCliente
+                {
+                    UsuarioId = user.Id,
+                    Alias = "Casa",
+                    Provincia = "Sin provincia",
+                    Canton = "Sin canton",
+                    Distrito = "Sin distrito",
+                    SenasExactas = direccion.Trim(),
+                    Predeterminada = true
+                });
             }
 
             return (true, "Cuenta creada. Ya puedes iniciar sesion.", user);
@@ -101,34 +131,36 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            var user = FindUserByEmail(correo);
+            var user = _userRepository.FindByEmail(correo);
             if (user is null)
             {
-                _auditLogs.Add(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login fallido: correo no registrado" });
+                _userRepository.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login fallido: correo no registrado" });
                 return (false, "Correo o contrasena incorrectos.", null);
             }
 
             if (user.BloqueadoHastaUtc > DateTime.UtcNow)
             {
-                _auditLogs.Add(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login bloqueado temporalmente" });
+                _userRepository.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login bloqueado temporalmente" });
                 return (false, "La cuenta esta bloqueada temporalmente por intentos fallidos.", null);
             }
 
             if (!PasswordService.Verify(password, user.PasswordHash))
             {
                 user.IntentosFallidos++;
-                _auditLogs.Add(new AuditLogItem { Correo = correo, Ip = ip, Evento = $"Login fallido #{user.IntentosFallidos}" });
                 if (user.IntentosFallidos >= 5)
                 {
                     user.BloqueadoHastaUtc = DateTime.UtcNow.AddMinutes(15);
                 }
 
+                _userRepository.UpdateLoginState(user.Id, user.IntentosFallidos, user.BloqueadoHastaUtc);
+                _userRepository.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = $"Login fallido #{user.IntentosFallidos}" });
                 return (false, "Correo o contrasena incorrectos.", null);
             }
 
+            _userRepository.UpdateLoginState(user.Id, 0, null);
+            _userRepository.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login exitoso" });
             user.IntentosFallidos = 0;
             user.BloqueadoHastaUtc = null;
-            _auditLogs.Add(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login exitoso" });
             return (true, "Sesion iniciada.", user);
         }
     }
@@ -137,7 +169,7 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            _errorLogs.Add(new LogErrorItem { Ruta = ruta, Mensaje = mensaje });
+            _userRepository.AddErrorLog(new LogErrorItem { Ruta = ruta, Mensaje = mensaje });
         }
     }
 
@@ -150,11 +182,8 @@ public sealed class CampoMarketStore
                 return (false, "El telefono debe tener entre 7 y 20 caracteres y usar solo digitos, espacios, guiones o prefijo.");
             }
 
-            var user = _usuarios.FirstOrDefault(u => u.Id == userId);
-            if (user is null) return (false, "Usuario no encontrado.");
-            user.Nombre = nombre.Trim();
-            user.Telefono = telefono.Trim();
-            user.Direccion = direccion.Trim();
+            if (_userRepository.FindById(userId) is null) return (false, "Usuario no encontrado.");
+            _userRepository.UpdateProfile(userId, nombre.Trim(), telefono.Trim());
             return (true, "Perfil actualizado.");
         }
     }
@@ -163,14 +192,14 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            var user = _usuarios.FirstOrDefault(u => u.Id == userId);
+            var user = _userRepository.FindById(userId);
             if (user is null) return (false, "Usuario no encontrado.");
             if (!PasswordService.Verify(actual, user.PasswordHash))
             {
                 return (false, "La contrasena actual no coincide.");
             }
 
-            user.PasswordHash = PasswordService.Hash(nuevo);
+            _userRepository.UpdatePassword(userId, PasswordService.Hash(nuevo));
             return (true, "Contrasena actualizada.");
         }
     }
@@ -179,14 +208,14 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            var user = _usuarios.FirstOrDefault(u => u.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase));
+            var user = _userRepository.FindByEmail(correo);
             if (user is null)
             {
                 return (true, "Si el correo existe, se genero un enlace temporal.", null);
             }
 
             var token = Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant();
-            _resetTokens.Add(new PasswordResetToken
+            _userRepository.AddPasswordResetToken(new PasswordResetToken
             {
                 UsuarioId = user.Id,
                 Token = token,
@@ -200,24 +229,23 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            var reset = _resetTokens.LastOrDefault(t => t.Token == token && !t.Usado);
-            if (reset is null || reset.ExpiraUtc < DateTime.UtcNow)
+            var reset = _userRepository.FindPasswordResetToken(token);
+            if (reset is null || reset.Usado || reset.ExpiraUtc < DateTime.UtcNow)
             {
                 return (false, "El token no existe o ya expiro.");
             }
 
-            var user = _usuarios.FirstOrDefault(u => u.Id == reset.UsuarioId);
-            if (user is null) return (false, "Usuario no encontrado.");
-            user.PasswordHash = PasswordService.Hash(nuevo);
-            reset.Usado = true;
+            if (_userRepository.FindById(reset.UsuarioId) is null) return (false, "Usuario no encontrado.");
+            _userRepository.UpdatePassword(reset.UsuarioId, PasswordService.Hash(nuevo));
+            _userRepository.MarkPasswordResetTokenUsed(token);
             return (true, "Contrasena restablecida. Ya puedes iniciar sesion.");
         }
     }
-
     public IEnumerable<Producto> BuscarProductos(string? categoria, string? buscar, string? orden)
     {
         lock (_sync)
         {
+            LoadCatalogState();
             var query = _productos.Where(p => p.Activo && p.Stock > 0);
             if (int.TryParse(categoria, out var categoriaId) && categoriaId > 0)
             {
@@ -242,13 +270,26 @@ public sealed class CampoMarketStore
 
     public Producto? FindProduct(int id)
     {
-        lock (_sync) return _productos.FirstOrDefault(p => p.Id == id) is { } p ? Clone(p) : null;
+        lock (_sync)
+        {
+            LoadCatalogState();
+            return _productos.FirstOrDefault(p => p.Id == id) is { } p ? Clone(p) : null;
+        }
     }
 
-    public void SaveProduct(ProductoFormViewModel form)
+    public (bool Ok, string Message) SaveProduct(ProductoFormViewModel form)
     {
         lock (_sync)
         {
+            LoadCatalogState();
+            var productsSnapshot = _productos.Select(Clone).ToList();
+            var productIdSnapshot = _productoId;
+
+            if (!_categorias.Any(c => c.Id == form.CategoriaId && c.Activa))
+            {
+                return (false, "Selecciona una categoria activa para el producto.");
+            }
+
             if (form.Id == 0)
             {
                 _productos.Add(new Producto
@@ -264,11 +305,24 @@ public sealed class CampoMarketStore
                     Activo = form.Activo,
                     ActualizadoUtc = DateTime.UtcNow
                 });
-                SaveCatalogState();
-                return;
+                try
+                {
+                    SaveCatalogState();
+                }
+                catch
+                {
+                    _productos.Clear();
+                    _productos.AddRange(productsSnapshot);
+                    _productoId = productIdSnapshot;
+                    throw;
+                }
+
+                return (true, "Producto creado.");
             }
 
-            var product = _productos.First(p => p.Id == form.Id);
+            var product = _productos.FirstOrDefault(p => p.Id == form.Id);
+            if (product is null) return (false, "Producto no encontrado.");
+
             product.Nombre = form.Nombre;
             product.Descripcion = form.Descripcion;
             product.Precio = form.Precio;
@@ -278,7 +332,19 @@ public sealed class CampoMarketStore
             product.ImagenUrl = string.IsNullOrWhiteSpace(form.ImagenUrl) ? product.ImagenUrl : form.ImagenUrl;
             product.Activo = form.Activo;
             product.ActualizadoUtc = DateTime.UtcNow;
-            SaveCatalogState();
+            try
+            {
+                SaveCatalogState();
+            }
+            catch
+            {
+                _productos.Clear();
+                _productos.AddRange(productsSnapshot);
+                _productoId = productIdSnapshot;
+                throw;
+            }
+
+            return (true, "Producto actualizado.");
         }
     }
 
@@ -286,6 +352,7 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
+            LoadCatalogState();
             var hasActiveOrders = _pedidos.Any(p => p.Estado is not EstadosPedido.Entregado and not EstadosPedido.Cancelado && p.Detalles.Any(d => d.ProductoId == id));
             if (hasActiveOrders)
             {
@@ -305,6 +372,7 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
+            LoadCatalogState();
             if (cantidad == 0) return (false, "El ajuste no puede ser cero.");
             var product = _productos.FirstOrDefault(p => p.Id == id);
             if (product is null) return (false, "Producto no encontrado.");
@@ -369,12 +437,12 @@ public sealed class CampoMarketStore
 
     public IEnumerable<DireccionCliente> GetAddresses(int userId)
     {
-        lock (_sync) return _direcciones.Where(d => d.UsuarioId == userId).OrderByDescending(d => d.Predeterminada).ToList();
+        lock (_sync) return _userRepository.GetAddresses(userId);
     }
 
     public DireccionCliente? FindAddress(int userId, int id)
     {
-        lock (_sync) return _direcciones.FirstOrDefault(d => d.UsuarioId == userId && d.Id == id);
+        lock (_sync) return _userRepository.FindAddress(userId, id);
     }
 
     public (bool Ok, string Message) SaveAddress(int userId, DireccionFormViewModel form)
@@ -383,40 +451,32 @@ public sealed class CampoMarketStore
         {
             if (form.Predeterminada)
             {
-                foreach (var address in _direcciones.Where(d => d.UsuarioId == userId))
-                {
-                    address.Predeterminada = false;
-                }
+                _userRepository.ClearDefaultAddresses(userId);
             }
 
-            var detalle = $"{form.Provincia}, {form.Canton}, {form.Distrito}. {form.SenasExactas}";
+            var address = new DireccionCliente
+            {
+                Id = form.Id,
+                UsuarioId = userId,
+                Alias = form.Alias.Trim(),
+                Provincia = form.Provincia.Trim(),
+                Canton = form.Canton.Trim(),
+                Distrito = form.Distrito.Trim(),
+                SenasExactas = form.SenasExactas.Trim(),
+                Predeterminada = form.Predeterminada
+            };
+            address.Detalle = $"{address.Provincia}, {address.Canton}, {address.Distrito}. {address.SenasExactas}";
+
             if (form.Id == 0)
             {
-                var hasAddress = _direcciones.Any(d => d.UsuarioId == userId);
-                _direcciones.Add(new DireccionCliente
-                {
-                    Id = _direccionId++,
-                    UsuarioId = userId,
-                    Alias = form.Alias.Trim(),
-                    Provincia = form.Provincia.Trim(),
-                    Canton = form.Canton.Trim(),
-                    Distrito = form.Distrito.Trim(),
-                    SenasExactas = form.SenasExactas.Trim(),
-                    Detalle = detalle,
-                    Predeterminada = form.Predeterminada || !hasAddress
-                });
+                var hasAddress = _userRepository.GetAddresses(userId).Any();
+                address.Predeterminada = form.Predeterminada || !hasAddress;
+                _userRepository.CreateAddress(address);
                 return (true, "Direccion agregada.");
             }
 
-            var existing = _direcciones.FirstOrDefault(d => d.UsuarioId == userId && d.Id == form.Id);
-            if (existing is null) return (false, "Direccion no encontrada.");
-            existing.Alias = form.Alias.Trim();
-            existing.Provincia = form.Provincia.Trim();
-            existing.Canton = form.Canton.Trim();
-            existing.Distrito = form.Distrito.Trim();
-            existing.SenasExactas = form.SenasExactas.Trim();
-            existing.Detalle = detalle;
-            existing.Predeterminada = form.Predeterminada;
+            if (_userRepository.FindAddress(userId, form.Id) is null) return (false, "Direccion no encontrada.");
+            _userRepository.UpdateAddress(address);
             return (true, "Direccion actualizada.");
         }
     }
@@ -425,20 +485,23 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
-            var address = _direcciones.FirstOrDefault(d => d.UsuarioId == userId && d.Id == id);
+            var address = _userRepository.FindAddress(userId, id);
             if (address is null) return (false, "Direccion no encontrada.");
             var hasPendingOrder = _pedidos.Any(p => p.UsuarioId == userId && p.Estado is not EstadosPedido.Entregado and not EstadosPedido.Cancelado && p.DireccionEntrega == address.Detalle);
             if (hasPendingOrder) return (false, "No se puede eliminar una direccion usada por pedidos activos.");
-            _direcciones.Remove(address);
-            if (address.Predeterminada && _direcciones.FirstOrDefault(d => d.UsuarioId == userId) is { } next)
+
+            _userRepository.DeleteAddress(id);
+            var remaining = _userRepository.GetAddresses(userId).ToList();
+            if (address.Predeterminada && remaining.Count > 0 && !remaining.Any(d => d.Predeterminada))
             {
+                var next = remaining[0];
                 next.Predeterminada = true;
+                _userRepository.UpdateAddress(next);
             }
 
             return (true, "Direccion eliminada.");
         }
     }
-
     public (bool Ok, string Message, Pedido? Pedido) CreateOrder(int userId, string tipoEntrega, string direccionEntrega)
     {
         lock (_sync)
@@ -547,7 +610,7 @@ public sealed class CampoMarketStore
             if (!string.IsNullOrWhiteSpace(buscar))
             {
                 var text = buscar.Trim();
-                query = query.Where(p => p.Numero.Contains(text, StringComparison.OrdinalIgnoreCase) || (_usuarios.FirstOrDefault(u => u.Id == p.UsuarioId)?.Nombre.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false));
+                query = query.Where(p => p.Numero.Contains(text, StringComparison.OrdinalIgnoreCase) || (_userRepository.FindById(p.UsuarioId)?.Nombre.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false));
             }
 
             return query.OrderByDescending(p => p.FechaUtc).Select(Clone).ToList();
@@ -558,6 +621,7 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
+            LoadCatalogState();
             var pedidos = _pedidos.Where(p => p.Estado != EstadosPedido.Cancelado);
             if (desde.HasValue) pedidos = pedidos.Where(p => p.FechaUtc.Date >= desde.Value.Date);
             if (hasta.HasValue) pedidos = pedidos.Where(p => p.FechaUtc.Date <= hasta.Value.Date);
@@ -585,6 +649,7 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
+            LoadCatalogState();
             var query = _movimientos.AsEnumerable();
             if (desde.HasValue) query = query.Where(m => m.FechaUtc.Date >= desde.Value.Date);
             if (hasta.HasValue) query = query.Where(m => m.FechaUtc.Date <= hasta.Value.Date);
@@ -599,6 +664,10 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
+            LoadCatalogState();
+            var categoriesSnapshot = _categorias.Select(Clone).ToList();
+            var categoryIdSnapshot = _categoriaId;
+
             if (_categorias.Any(c => c.Id != form.Id && c.Nombre.Equals(form.Nombre.Trim(), StringComparison.OrdinalIgnoreCase)))
             {
                 return (false, "Ya existe una categoria con ese nombre.");
@@ -607,7 +676,18 @@ public sealed class CampoMarketStore
             if (form.Id == 0)
             {
                 _categorias.Add(new Categoria { Id = _categoriaId++, Nombre = form.Nombre.Trim(), Descripcion = form.Descripcion.Trim(), Activa = true });
-                SaveCatalogState();
+                try
+                {
+                    SaveCatalogState();
+                }
+                catch
+                {
+                    _categorias.Clear();
+                    _categorias.AddRange(categoriesSnapshot);
+                    _categoriaId = categoryIdSnapshot;
+                    throw;
+                }
+
                 return (true, "Categoria creada.");
             }
 
@@ -616,7 +696,18 @@ public sealed class CampoMarketStore
             category.Nombre = form.Nombre.Trim();
             category.Descripcion = form.Descripcion.Trim();
             category.Activa = true;
-            SaveCatalogState();
+            try
+            {
+                SaveCatalogState();
+            }
+            catch
+            {
+                _categorias.Clear();
+                _categorias.AddRange(categoriesSnapshot);
+                _categoriaId = categoryIdSnapshot;
+                throw;
+            }
+
             return (true, "Categoria actualizada.");
         }
     }
@@ -625,6 +716,7 @@ public sealed class CampoMarketStore
     {
         lock (_sync)
         {
+            LoadCatalogState();
             if (_productos.Any(p => p.CategoriaId == id && p.Activo))
             {
                 return (false, "No se puede eliminar una categoria con productos activos.");
@@ -651,32 +743,7 @@ public sealed class CampoMarketStore
 
     private void Seed()
     {
-        _usuarios.Add(new Usuario { Id = _usuarioId++, Nombre = "Cliente Demo", Correo = "cliente@campomarket.test", Telefono = "88888888", Direccion = "Barrio Fresco #123", Rol = RolesCampo.Cliente, PasswordHash = PasswordService.Hash("Cliente123!") });
-        _usuarios.Add(new Usuario { Id = _usuarioId++, Nombre = "Admin Campo", Correo = "admin@campomarket.test", Telefono = "89999999", Rol = RolesCampo.Admin, PasswordHash = PasswordService.Hash("Admin123!") });
-        _direcciones.Add(new DireccionCliente
-        {
-            Id = _direccionId++,
-            UsuarioId = 1,
-            Alias = "Casa",
-            Provincia = "San Jose",
-            Canton = "Central",
-            Distrito = "Carmen",
-            SenasExactas = "Barrio Fresco #123",
-            Detalle = "San Jose, Central, Carmen. Barrio Fresco #123",
-            Predeterminada = true
-        });
-
         LoadCatalogState();
-
-        if (_categorias.Count == 0)
-        {
-            foreach (var name in new[] { "Frutas", "Verduras", "Lacteos", "Carnes", "Despensa" })
-            {
-                _categorias.Add(new Categoria { Id = _categoriaId++, Nombre = name, Descripcion = $"Productos de categoria {name.ToLowerInvariant()}" });
-            }
-
-            SaveCatalogState();
-        }
     }
 
     private void LoadCatalogState()
@@ -702,6 +769,7 @@ public sealed class CampoMarketStore
             Productos = _productos,
             Movimientos = _movimientos
         });
+        LoadCatalogState();
     }
 
     private static Producto Clone(Producto p) => new()
@@ -718,6 +786,14 @@ public sealed class CampoMarketStore
         ActualizadoUtc = p.ActualizadoUtc
     };
 
+    private static Categoria Clone(Categoria c) => new()
+    {
+        Id = c.Id,
+        Nombre = c.Nombre,
+        Descripcion = c.Descripcion,
+        Activa = c.Activa
+    };
+
     private static Pedido Clone(Pedido p) => new()
     {
         Id = p.Id,
@@ -731,6 +807,28 @@ public sealed class CampoMarketStore
         Total = p.Total,
         Detalles = p.Detalles.Select(d => new PedidoDetalle { ProductoId = d.ProductoId, ProductoNombre = d.ProductoNombre, Cantidad = d.Cantidad, PrecioUnitario = d.PrecioUnitario }).ToList(),
         Historial = p.Historial.Select(h => new HistorialEstado { Estado = h.Estado, FechaUtc = h.FechaUtc }).ToList()
+    };
+
+    private static Usuario Clone(Usuario u) => new()
+    {
+        Id = u.Id,
+        Nombre = u.Nombre,
+        Correo = u.Correo,
+        Telefono = u.Telefono,
+        Direccion = u.Direccion,
+        Rol = u.Rol,
+        IntentosFallidos = u.IntentosFallidos,
+        BloqueadoHastaUtc = u.BloqueadoHastaUtc
+    };
+
+    private static MovimientoInventario Clone(MovimientoInventario m) => new()
+    {
+        FechaUtc = m.FechaUtc,
+        ProductoId = m.ProductoId,
+        ProductoNombre = m.ProductoNombre,
+        Tipo = m.Tipo,
+        Cantidad = m.Cantidad,
+        Motivo = m.Motivo
     };
 
     private static bool IsValidPhone(string phone)

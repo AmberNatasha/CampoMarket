@@ -5,20 +5,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CampoMarket.Web.Controllers;
 
-public sealed class CatalogoController(CampoMarketStore store) : Controller
+public sealed class CatalogoController(ICatalogService Catalogo) : Controller
 {
-    [HttpGet("/catalogo")]
+    [HttpGet("/Catalogo")]
     public IActionResult Index(string? categoria, string? buscar, string? orden, int pagina = 1)
     {
         const int pageSize = 6;
-        var productos = store.BuscarProductos(categoria, buscar, orden).ToList();
+        var productos = Catalogo.BuscarProductos(categoria, buscar, orden).ToList();
         var totalPaginas = Math.Max(1, (int)Math.Ceiling(productos.Count / (double)pageSize));
         pagina = Math.Clamp(pagina, 1, totalPaginas);
 
         return View(new CatalogoViewModel
         {
             Productos = productos.Skip((pagina - 1) * pageSize).Take(pageSize),
-            Categorias = store.Categorias.Where(c => c.Activa),
+            Categorias = Catalogo.Categorias.Where(c => c.Activa),
             Categoria = categoria,
             Buscar = buscar,
             Orden = orden,
@@ -27,11 +27,11 @@ public sealed class CatalogoController(CampoMarketStore store) : Controller
         });
     }
 
-    [HttpGet("/catalogo/buscar-json")]
+    [HttpGet("/Catalogo/buscar-json")]
     public IActionResult BuscarJson(string? categoria, string? buscar, string? orden, int pagina = 1)
     {
         const int pageSize = 6;
-        var productos = store.BuscarProductos(categoria, buscar, orden).ToList();
+        var productos = Catalogo.BuscarProductos(categoria, buscar, orden).ToList();
         var totalPaginas = Math.Max(1, (int)Math.Ceiling(productos.Count / (double)pageSize));
         pagina = Math.Clamp(pagina, 1, totalPaginas);
         return Json(new
@@ -51,10 +51,10 @@ public sealed class CatalogoController(CampoMarketStore store) : Controller
         });
     }
 
-    [HttpGet("/catalogo/producto/{id:int}")]
+    [HttpGet("/Catalogo/producto/{id:int}")]
     public IActionResult Detalle(int id)
     {
-        var product = store.FindProduct(id);
+        var product = Catalogo.FindProduct(id);
         return product is null ? NotFound() : View(product);
     }
 }

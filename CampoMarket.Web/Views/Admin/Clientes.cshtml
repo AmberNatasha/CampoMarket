@@ -1,0 +1,55 @@
+@model IEnumerable<CampoMarket.Web.Models.Usuario>
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h1 class="section-title mb-0">Clientes registrados</h1>
+            <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="Index">Volver al panel</a>
+        </div>
+
+        <div class="cm-card">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Correo</th>
+                            <th>Telefono</th>
+                            <th>Direccion principal</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Todavia no hay clientes registrados.</td>
+                            </tr>
+                        }
+                        @foreach (var cliente in Model)
+                        {
+                            var bloqueado = cliente.BloqueadoHastaUtc > DateTime.UtcNow;
+                            <tr>
+                                <td>
+                                    <strong>@cliente.Nombre</strong>
+                                    <div class="small text-muted">ID @cliente.Id</div>
+                                </td>
+                                <td>@cliente.Correo</td>
+                                <td>@(string.IsNullOrWhiteSpace(cliente.Telefono) ? "Sin telefono" : cliente.Telefono)</td>
+                                <td>@(string.IsNullOrWhiteSpace(cliente.Direccion) ? "Sin direccion" : cliente.Direccion)</td>
+                                <td>
+                                    <span class="badge @(bloqueado ? "status-cancelado" : "status-entregado")">
+                                        @(bloqueado ? "Bloqueado temporalmente" : "Activo")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

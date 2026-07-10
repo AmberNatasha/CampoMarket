@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CampoMarket.Web.Controllers;
 
-public sealed class ErrorController(CampoMarketStore store) : Controller
+public sealed class ErrorController(IAuditService audit) : Controller
 {
     [HttpGet("/Error")]
     [HttpGet("/Error/{statusCode:int}")]
@@ -13,7 +13,7 @@ public sealed class ErrorController(CampoMarketStore store) : Controller
         var feature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
         if (feature?.Error is not null)
         {
-            store.LogError(feature.Path, feature.Error.Message);
+            audit.LogError(feature.Path, feature.Error.Message);
         }
 
         ViewBag.StatusCode = statusCode ?? HttpContext.Response.StatusCode;

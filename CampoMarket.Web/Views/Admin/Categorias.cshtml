@@ -14,6 +14,12 @@
                 <table class="table align-middle">
                     <thead><tr><th>Nombre</th><th>Descripcion</th><th>Estado</th><th></th></tr></thead>
                     <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No hay categorias. Crea una categoria antes de registrar productos.</td>
+                            </tr>
+                        }
                         @foreach (var categoria in Model)
                         {
                             <tr>

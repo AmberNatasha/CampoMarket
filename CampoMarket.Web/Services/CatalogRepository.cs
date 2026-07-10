@@ -1,4 +1,3 @@
-using System.Text.Json;
 using CampoMarket.Web.Models;
 using Microsoft.Data.SqlClient;
 
@@ -8,26 +7,14 @@ public interface ICatalogRepository
 {
     CatalogState Load();
     void Save(CatalogState state);
+    DatabaseConnectionInfo GetConnectionInfo();
 }
 
-public sealed class JsonCatalogRepository(IWebHostEnvironment environment) : ICatalogRepository
+public sealed class DatabaseConnectionInfo
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
-    private readonly string _stateFilePath = Path.Combine(environment.ContentRootPath, "App_Data", "campo-market-store.json");
-
-    public CatalogState Load()
-    {
-        if (!File.Exists(_stateFilePath)) return new CatalogState();
-
-        var json = File.ReadAllText(_stateFilePath);
-        return JsonSerializer.Deserialize<CatalogState>(json, JsonOptions) ?? new CatalogState();
-    }
-
-    public void Save(CatalogState state)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(_stateFilePath)!);
-        File.WriteAllText(_stateFilePath, JsonSerializer.Serialize(state, JsonOptions));
-    }
+    public string Server { get; set; } = "";
+    public string Database { get; set; } = "";
+    public string Login { get; set; } = "";
 }
 
 public sealed class SqlCatalogRepository(IConfiguration configuration) : ICatalogRepository
@@ -110,6 +97,28 @@ public sealed class SqlCatalogRepository(IConfiguration configuration) : ICatalo
         }
 
         return state;
+    }
+
+    public DatabaseConnectionInfo GetConnectionInfo()
+    {
+        using var connection = new SqlConnection(_connectionString);
+        connection.Open();
+
+        using var command = new SqlCommand("""
+            SELECT
+                CAST(SERVERPROPERTY('ServerName') AS NVARCHAR(128)),
+                DB_NAME(),
+                SUSER_SNAME();
+            """, connection);
+        using var reader = command.ExecuteReader();
+        reader.Read();
+
+        return new DatabaseConnectionInfo
+        {
+            Server = reader.GetString(0),
+            Database = reader.GetString(1),
+            Login = reader.GetString(2)
+        };
     }
 
     public void Save(CatalogState state)
