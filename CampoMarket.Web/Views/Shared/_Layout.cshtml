@@ -27,7 +27,7 @@
                 <div class="collapse navbar-collapse" id="mainNavigation">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Catalogo" asp-action="Index">Catalogo</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Catalogo" asp-action="Index">Catálogo</a></li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             @if (User.IsInRole("Admin"))
@@ -64,14 +64,22 @@
         </nav>
     </header>
 
-    <main role="main">
-        @if (TempData["Flash"] is string flash)
-        {
-            var type = TempData["FlashType"] as string ?? "success";
-            <div class="container px-4 px-lg-5 pt-3">
-                <div class="alert alert-@type mb-0">@flash</div>
+    @if (TempData["Flash"] is string flash)
+    {
+        var type = TempData["FlashType"] as string ?? "success";
+        var icon = type == "danger" ? "bi-exclamation-circle-fill" : "bi-check-circle-fill";
+        <div class="cm-toast-container" aria-live="polite" aria-atomic="true">
+            <div class="toast cm-toast cm-toast-@type" role="status" data-bs-autohide="true" data-bs-delay="4500">
+                <div class="toast-body">
+                    <i class="bi @icon cm-toast-icon" aria-hidden="true"></i>
+                    <span>@flash</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Cerrar mensaje"></button>
+                </div>
             </div>
-        }
+        </div>
+    }
+
+    <main role="main">
         @RenderBody()
     </main>
 

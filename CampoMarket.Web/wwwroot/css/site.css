@@ -427,6 +427,49 @@ a:focus {
   border-color: rgba(244, 162, 97, 0.48);
 }
 
+.cm-toast-container {
+  position: fixed;
+  top: 5rem;
+  right: 1.25rem;
+  z-index: 1090;
+  width: min(24rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.cm-toast {
+  width: 100%;
+  color: var(--cm-charcoal);
+  background: var(--cm-white);
+  border: 1px solid rgba(76, 140, 58, 0.28);
+  border-left: 0.4rem solid var(--cm-primary-green);
+  border-radius: 1rem;
+  box-shadow: 0 0.8rem 2.2rem rgba(47, 47, 47, 0.2);
+  pointer-events: auto;
+}
+
+.cm-toast-danger {
+  border-color: rgba(156, 63, 34, 0.3);
+  border-left-color: #9c3f22;
+}
+
+.cm-toast .toast-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  font-weight: 600;
+}
+
+.cm-toast-icon {
+  flex: 0 0 auto;
+  color: var(--cm-primary-green);
+  font-size: 1.25rem;
+}
+
+.cm-toast-danger .cm-toast-icon {
+  color: #9c3f22;
+}
+
 .table {
   color: var(--cm-charcoal);
   border-color: var(--cm-border);
@@ -502,6 +545,11 @@ a:focus {
 }
 
 @media (max-width: 575.98px) {
+  .cm-toast-container {
+    top: 4.5rem;
+    right: 1rem;
+  }
+
   .cm-hero,
   .cm-page-header {
     text-align: center;

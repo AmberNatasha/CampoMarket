@@ -135,7 +135,7 @@ public sealed class CampoMarketStore :
             if (user is null)
             {
                 _userRepository.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login fallido: correo no registrado" });
-                return (false, "Correo o contrasena incorrectos.", null);
+                return (false, "Correo o contraseña incorrectos.", null);
             }
 
             if (user.BloqueadoHastaUtc > DateTime.UtcNow)
@@ -154,7 +154,7 @@ public sealed class CampoMarketStore :
 
                 _userRepository.UpdateLoginState(user.Id, user.IntentosFallidos, user.BloqueadoHastaUtc);
                 _userRepository.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = $"Login fallido #{user.IntentosFallidos}" });
-                return (false, "Correo o contrasena incorrectos.", null);
+                return (false, "Correo o contraseña incorrectos.", null);
             }
 
             _userRepository.UpdateLoginState(user.Id, 0, null);
@@ -196,11 +196,11 @@ public sealed class CampoMarketStore :
             if (user is null) return (false, "Usuario no encontrado.");
             if (!PasswordService.Verify(actual, user.PasswordHash))
             {
-                return (false, "La contrasena actual no coincide.");
+                return (false, "La contraseña actual no coincide.");
             }
 
             _userRepository.UpdatePassword(userId, PasswordService.Hash(nuevo));
-            return (true, "Contrasena actualizada.");
+            return (true, "contraseña actualizada.");
         }
     }
 
@@ -238,7 +238,7 @@ public sealed class CampoMarketStore :
             if (_userRepository.FindById(reset.UsuarioId) is null) return (false, "Usuario no encontrado.");
             _userRepository.UpdatePassword(reset.UsuarioId, PasswordService.Hash(nuevo));
             _userRepository.MarkPasswordResetTokenUsed(token);
-            return (true, "Contrasena restablecida. Ya puedes iniciar sesion.");
+            return (true, "contraseña restablecida. Ya puedes iniciar sesion.");
         }
     }
     public IEnumerable<Producto> BuscarProductos(string? categoria, string? buscar, string? orden)

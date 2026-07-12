@@ -1,12 +1,12 @@
-@model CampoMarket.Web.Models.CatalogoViewModel
+@model CampoMarket.Web.Models.CatálogoViewModel
 @{
-    ViewData["Title"] = "Catalogo";
+    ViewData["Title"] = "Catálogo";
 }
 
 <section class="cm-page-header">
     <div class="container px-4 px-lg-5">
         <span class="cm-kicker">Frescura y Calidad desde 2026</span>
-        <h1>Catalogo</h1>
+        <h1>Catálogo</h1>
         <p>Filtra, busca y agrega productos frescos al carrito.</p>
     </div>
 </section>
@@ -78,7 +78,7 @@
                 </div>
             }
         </div>
-        <nav class="mt-4" aria-label="Paginacion Catalogo">
+        <nav class="mt-4" aria-label="Paginacion Catálogo">
             <ul class="pagination justify-content-center">
                 @for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
                 {
@@ -130,7 +130,7 @@
                                 <p class="text-muted">${producto.descripcion}</p>
                                 <div class="small mb-3">Stock: ${producto.stock}</div>
                                 <div class="mt-auto d-flex gap-2">
-                                    <a class="btn btn-outline-primary flex-fill" href="/Catalogo/producto/${producto.id}">Ver</a>
+                                    <a class="btn btn-outline-primary flex-fill" href="/catalogo/producto/${producto.id}">Ver</a>
                                     ${buy}
                                 </div>
                             </div>
@@ -141,7 +141,7 @@
 
             const search = () => {
                 const data = new URLSearchParams(new FormData(form));
-                fetch(`/Catalogo/buscar-json?${data.toString()}`)
+                fetch(`/catalogo/buscar-json?${data.toString()}`)
                     .then(response => response.json())
                     .then(payload => render(payload.productos));
             };

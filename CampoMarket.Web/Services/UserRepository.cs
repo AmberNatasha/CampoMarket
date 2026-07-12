@@ -60,9 +60,13 @@ public sealed class SqlUserRepository(IConfiguration configuration) : IUserRepos
     {
         using var connection = OpenConnection();
         using var command = new SqlCommand("""
+            DECLARE @usuarioCreado TABLE (id_usuario INT);
+
             INSERT INTO dbo.Usuario (nombre, correo, contrasena_hash, telefono, rol, intentos_fallidos, bloqueado_hasta, activo)
-            OUTPUT INSERTED.id_usuario
+            OUTPUT INSERTED.id_usuario INTO @usuarioCreado (id_usuario)
             VALUES (@nombre, @correo, @passwordHash, @telefono, @rol, @intentos, @bloqueadoHasta, 1);
+
+            SELECT id_usuario FROM @usuarioCreado;
             """, connection);
         command.Parameters.AddWithValue("@nombre", user.Nombre);
         command.Parameters.AddWithValue("@correo", user.Correo);

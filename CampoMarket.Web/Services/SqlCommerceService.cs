@@ -146,9 +146,13 @@ public sealed class SqlCommerceService(IConfiguration configuration, IUserReposi
             var total = items.Sum(i => i.Cantidad * i.Producto.Precio);
 
             using var orderCommand = new SqlCommand("""
+                DECLARE @pedidoCreado TABLE (id_pedido INT);
+
                 INSERT INTO dbo.Pedido (id_usuario, id_direccion, id_metodo, numero_pedido, estado, total)
-                OUTPUT INSERTED.id_pedido
+                OUTPUT INSERTED.id_pedido INTO @pedidoCreado (id_pedido)
                 VALUES (@userId, @addressId, @methodId, @number, @estado, @total);
+
+                SELECT id_pedido FROM @pedidoCreado;
                 """, connection, transaction);
             orderCommand.Parameters.AddWithValue("@userId", userId);
             orderCommand.Parameters.AddWithValue("@addressId", addressId);

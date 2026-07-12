@@ -55,7 +55,7 @@ public sealed class SqlAccountService(IUserRepository users) :
         if (user is null)
         {
             users.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = "Login fallido: correo no registrado" });
-            return (false, "Correo o contrasena incorrectos.", null);
+            return (false, "Correo o contraseña incorrectos.", null);
         }
 
         if (user.BloqueadoHastaUtc > DateTime.UtcNow)
@@ -74,7 +74,7 @@ public sealed class SqlAccountService(IUserRepository users) :
 
             users.UpdateLoginState(user.Id, user.IntentosFallidos, user.BloqueadoHastaUtc);
             users.AddAuditLog(new AuditLogItem { Correo = correo, Ip = ip, Evento = $"Login fallido #{user.IntentosFallidos}" });
-            return (false, "Correo o contrasena incorrectos.", null);
+            return (false, "Correo o contraseña incorrectos.", null);
         }
 
         users.UpdateLoginState(user.Id, 0, null);
@@ -106,11 +106,11 @@ public sealed class SqlAccountService(IUserRepository users) :
         if (user is null) return (false, "Usuario no encontrado.");
         if (!PasswordService.Verify(actual, user.PasswordHash))
         {
-            return (false, "La contrasena actual no coincide.");
+            return (false, "La contraseña actual no coincide.");
         }
 
         users.UpdatePassword(userId, PasswordService.Hash(nuevo));
-        return (true, "Contrasena actualizada.");
+        return (true, "contraseña actualizada.");
     }
 
     public (bool Ok, string Message, string? Token) RequestPasswordReset(string correo)
@@ -147,7 +147,7 @@ public sealed class SqlAccountService(IUserRepository users) :
 
         users.UpdatePassword(reset.UsuarioId, PasswordService.Hash(nuevo));
         users.MarkPasswordResetTokenUsed(token);
-        return (true, "Contrasena restablecida. Ya puedes iniciar sesion.");
+        return (true, "contraseña restablecida. Ya puedes iniciar sesion.");
     }
 
     public IEnumerable<DireccionCliente> GetAddresses(int userId) => users.GetAddresses(userId);

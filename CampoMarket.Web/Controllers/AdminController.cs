@@ -7,7 +7,7 @@ namespace CampoMarket.Web.Controllers;
 
 [Authorize(Roles = RolesCampo.Admin)]
 public sealed class AdminController(
-    ICatalogService catalogo,
+    ICatalogService Catálogo,
     IUserService usuarios,
     IOrderService pedidos,
     IReportService reportes,
@@ -21,7 +21,7 @@ public sealed class AdminController(
         var today = DateTime.UtcNow.Date;
         ViewBag.PedidosDia = pedidos.Pedidos.Count(p => p.FechaUtc.Date == today);
         ViewBag.IngresosDia = pedidos.Pedidos.Where(p => p.FechaUtc.Date == today && p.Estado != EstadosPedido.Cancelado).Sum(p => p.Total);
-        ViewBag.StockBajo = catalogo.Productos.Count(p => p.Activo && p.Stock <= p.StockMinimo);
+        ViewBag.StockBajo = Catálogo.Productos.Count(p => p.Activo && p.Stock <= p.StockMinimo);
         return View(pedidos.BuscarPedidosAdmin(null, null, null));
     }
 
@@ -64,7 +64,7 @@ public sealed class AdminController(
     }
 
     [HttpGet("/admin/productos")]
-    public IActionResult Productos() => View(catalogo.Productos);
+    public IActionResult Productos() => View(Catálogo.Productos);
 
     [HttpGet("/admin/clientes")]
     public IActionResult Clientes() => View(usuarios.Clientes);
@@ -78,7 +78,7 @@ public sealed class AdminController(
     [HttpGet("/admin/productos/{id:int}/editar")]
     public IActionResult EditarProducto(int id)
     {
-        var product = catalogo.FindProduct(id);
+        var product = Catálogo.FindProduct(id);
         if (product is null) return NotFound();
         return View("ProductoForm", WithProductCategories(new ProductoFormViewModel
         {
@@ -118,7 +118,7 @@ public sealed class AdminController(
 
         try
         {
-            var result = catalogo.SaveProduct(form);
+            var result = Catálogo.SaveProduct(form);
             if (result.Ok)
             {
                 TempData["Flash"] = result.Message;
@@ -138,7 +138,7 @@ public sealed class AdminController(
 
     private ProductoFormViewModel WithProductCategories(ProductoFormViewModel form)
     {
-        form.Categorias = catalogo.Categorias.Where(c => c.Activa).ToList();
+        form.Categorias = Catálogo.Categorias.Where(c => c.Activa).ToList();
         return form;
     }
 
@@ -146,7 +146,7 @@ public sealed class AdminController(
     [HttpPost("/admin/productos/{id:int}/desactivar")]
     public IActionResult DesactivarProducto(int id)
     {
-        var result = catalogo.DeactivateProduct(id);
+        var result = Catálogo.DeactivateProduct(id);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(Productos));
@@ -156,7 +156,7 @@ public sealed class AdminController(
     [HttpPost("/admin/productos/{id:int}/stock")]
     public IActionResult AjustarStock(int id, int cantidad, string motivo)
     {
-        var result = catalogo.AdjustStock(id, cantidad, motivo);
+        var result = Catálogo.AdjustStock(id, cantidad, motivo);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(Productos));
@@ -169,8 +169,8 @@ public sealed class AdminController(
         {
             MasVendidos = reportes.ProductosMasVendidos(desde, hasta, categoriaId),
             Movimientos = reportes.FiltrarMovimientos(desde, hasta, productoId),
-            Categorias = catalogo.Categorias.Where(c => c.Activa),
-            Productos = catalogo.Productos.Where(p => p.Activo),
+            Categorias = Catálogo.Categorias.Where(c => c.Activa),
+            Productos = Catálogo.Productos.Where(p => p.Activo),
             Desde = desde,
             Hasta = hasta,
             CategoriaId = categoriaId,
@@ -179,7 +179,7 @@ public sealed class AdminController(
     }
 
     [HttpGet("/admin/categorias")]
-    public IActionResult Categorias() => View(catalogo.Categorias);
+    public IActionResult Categorias() => View(Catálogo.Categorias);
 
     [HttpGet("/admin/auditoria")]
     public IActionResult Auditoria()
@@ -197,7 +197,7 @@ public sealed class AdminController(
     [HttpGet("/admin/categorias/{id:int}/editar")]
     public IActionResult EditarCategoria(int id)
     {
-        var category = catalogo.Categorias.FirstOrDefault(c => c.Id == id);
+        var category = Catálogo.Categorias.FirstOrDefault(c => c.Id == id);
         if (category is null) return NotFound();
         return View("CategoriaForm", new CategoriaFormViewModel { Id = category.Id, Nombre = category.Nombre, Descripcion = category.Descripcion });
     }
@@ -213,7 +213,7 @@ public sealed class AdminController(
 
         try
         {
-            var result = catalogo.SaveCategory(form);
+            var result = Catálogo.SaveCategory(form);
             TempData["Flash"] = result.Message;
             TempData["FlashType"] = result.Ok ? "success" : "danger";
             return result.Ok ? RedirectToAction(nameof(Categorias)) : View("CategoriaForm", form);
@@ -229,7 +229,7 @@ public sealed class AdminController(
     [HttpPost("/admin/categorias/{id:int}/eliminar")]
     public IActionResult EliminarCategoria(int id)
     {
-        var result = catalogo.DeleteCategory(id);
+        var result = Catálogo.DeleteCategory(id);
         TempData["Flash"] = result.Message;
         TempData["FlashType"] = result.Ok ? "success" : "danger";
         return RedirectToAction(nameof(Categorias));

@@ -1,6 +1,6 @@
 namespace CampoMarket.Web.Models;
 
-public sealed class CatalogoViewModel
+public sealed class CatálogoViewModel
 {
     public IEnumerable<Producto> Productos { get; set; } = [];
     public IEnumerable<Categoria> Categorias { get; set; } = [];
