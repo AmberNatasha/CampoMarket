@@ -7,7 +7,7 @@
     <div class="container px-4 px-lg-5">
         <span class="cm-kicker">Seguridad de cuenta</span>
         <h1>Recuperar contraseña</h1>
-        <p>Genera un enlace temporal valido por una hora.</p>
+        <p>Recibe por correo un enlace temporal válido por una hora.</p>
     </div>
 </section>
 
@@ -20,12 +20,6 @@
                     {
                         <div class="alert alert-success">@mensaje</div>
                     }
-                    @if (ViewBag.Token is string token)
-                    {
-                        <div class="alert alert-info">
-                            Prototipo: <a asp-controller="Cuenta" asp-action="Restablecer" asp-route-token="@token">abrir enlace de restablecimiento</a>
-                        </div>
-                    }
                     <form method="post" asp-controller="Cuenta" asp-action="Recuperar">
                         @Html.AntiForgeryToken()
                         <div class="mb-4">
@@ -33,7 +27,7 @@
                             <input class="form-control" asp-for="Correo" placeholder="correo@ejemplo.com" />
                             <span asp-validation-for="Correo" class="text-danger"></span>
                         </div>
-                        <button class="btn btn-primary w-100" type="submit">Generar enlace</button>
+                        <button class="btn btn-primary w-100" type="submit">Enviar enlace</button>
                     </form>
                 </div>
             </div>

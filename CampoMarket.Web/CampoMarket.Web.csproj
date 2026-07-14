@@ -5,6 +5,7 @@
     <UseAppHost>false</UseAppHost>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>CampoMarket-Web-2026</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using CampoMarket.Web.Models;
 
 namespace CampoMarket.Web.Services;
@@ -121,20 +123,24 @@ public sealed class SqlAccountService(IUserRepository users) :
             return (true, "Si el correo existe, se genero un enlace temporal.", null);
         }
 
-        var token = Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant();
+        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
         users.AddPasswordResetToken(new PasswordResetToken
         {
             UsuarioId = user.Id,
-            Token = token,
+            Token = HashResetToken(token),
             ExpiraUtc = DateTime.UtcNow.AddHours(1)
         });
 
-        return (true, "Token temporal generado. En produccion se enviaria por correo.", token);
+        return (true, "Si el correo existe, recibirás un enlace temporal.", token);
     }
 
     public (bool Ok, string Message) ResetPassword(string token, string nuevo)
     {
-        var reset = users.FindPasswordResetToken(token);
+        var tokenHash = HashResetToken(token);
+        var reset = users.FindPasswordResetToken(tokenHash);
         if (reset is null || reset.Usado || reset.ExpiraUtc < DateTime.UtcNow)
         {
             return (false, "El token no existe o ya expiro.");
@@ -146,9 +152,12 @@ public sealed class SqlAccountService(IUserRepository users) :
         }
 
         users.UpdatePassword(reset.UsuarioId, PasswordService.Hash(nuevo));
-        users.MarkPasswordResetTokenUsed(token);
+        users.MarkPasswordResetTokenUsed(tokenHash);
         return (true, "contraseña restablecida. Ya puedes iniciar sesion.");
     }
+
+    private static string HashResetToken(string token) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
 
     public IEnumerable<DireccionCliente> GetAddresses(int userId) => users.GetAddresses(userId);
 

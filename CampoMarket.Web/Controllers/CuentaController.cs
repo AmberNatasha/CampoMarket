@@ -10,7 +10,9 @@ public sealed class CuentaController(
     IUserService usuarios,
     IAddressService direcciones,
     IPasswordResetService passwords,
-    IAuthSessionService sesiones) : Controller
+    IPasswordResetEmailSender passwordResetEmailSender,
+    IAuthSessionService sesiones,
+    ILogger<CuentaController> logger) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View("~/Views/Home/Login.cshtml");
@@ -172,7 +174,7 @@ public sealed class CuentaController(
 
     [ValidateAntiForgeryToken]
     [HttpPost("/recuperar")]
-    public IActionResult Recuperar(RecuperarPasswordViewModel model)
+    public async Task<IActionResult> Recuperar(RecuperarPasswordViewModel model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
@@ -180,8 +182,26 @@ public sealed class CuentaController(
         }
 
         var result = passwords.RequestPasswordReset(model.Correo);
-        ViewBag.Mensaje = result.Message;
-        ViewBag.Token = result.Token;
+        if (result.Token is not null)
+        {
+            var resetUrl = Url.Action(
+                nameof(Restablecer),
+                "Cuenta",
+                new { token = result.Token },
+                Request.Scheme,
+                Request.Host.Value)!;
+
+            try
+            {
+                await passwordResetEmailSender.SendAsync(model.Correo.Trim(), resetUrl, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "No se pudo enviar el correo de recuperación de contraseña.");
+            }
+        }
+
+        ViewBag.Mensaje = "Si el correo existe, recibirás un enlace para restablecer tu contraseña.";
         return View("~/Views/Home/Recuperar.cshtml", model);
     }
 

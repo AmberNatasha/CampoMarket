@@ -24,6 +24,8 @@ builder.Services.AddSingleton<IReportService>(sp => sp.GetRequiredService<SqlCom
 builder.Services.AddSingleton<IAuditService>(sp => sp.GetRequiredService<SqlAccountService>());
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IAuthSessionService, AuthSessionService>();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.AddScoped<IPasswordResetEmailSender, SmtpPasswordResetEmailSender>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CampoMarketLocal", policy =>
