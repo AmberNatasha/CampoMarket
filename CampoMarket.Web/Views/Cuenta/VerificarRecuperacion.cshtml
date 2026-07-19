@@ -1,0 +1,46 @@
+@model CampoMarket.Web.Models.VerificarRecuperacionViewModel
+@{
+    ViewData["Title"] = "Verificar clave";
+}
+
+<section class="cm-page-header">
+    <div class="container px-4 px-lg-5">
+        <span class="cm-kicker">Seguridad de cuenta</span>
+        <h1>Verifica tu clave</h1>
+        <p>Ingresa la clave de 8 caracteres que enviamos a tu correo.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="cm-card">
+                    <form method="post" asp-controller="Cuenta" asp-action="VerificarRecuperacion">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <div class="mb-4">
+                            <label class="form-label" asp-for="Correo"></label>
+                            <input class="form-control" asp-for="Correo" type="email" />
+                            <span asp-validation-for="Correo" class="text-danger"></span>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label" asp-for="Codigo"></label>
+                            <input class="form-control text-uppercase text-center fs-4"
+                                   asp-for="Codigo"
+                                   maxlength="8"
+                                   autocomplete="one-time-code"
+                                   style="letter-spacing:.35rem" />
+                            <span asp-validation-for="Codigo" class="text-danger"></span>
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">Verificar clave</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

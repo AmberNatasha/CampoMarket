@@ -241,6 +241,21 @@ public sealed class CampoMarketStore :
             return (true, "contraseña restablecida. Ya puedes iniciar sesion.");
         }
     }
+
+    public (bool Ok, string Message) ValidatePasswordResetCode(string correo, string code)
+    {
+        lock (_sync)
+        {
+            var user = _userRepository.FindByEmail(correo);
+            var reset = _userRepository.FindPasswordResetToken(code);
+            if (user is null || reset is null || reset.UsuarioId != user.Id || reset.Usado || reset.ExpiraUtc < DateTime.UtcNow)
+            {
+                return (false, "La clave no es válida o ya expiró.");
+            }
+
+            return (true, "Clave verificada.");
+        }
+    }
     public IEnumerable<Producto> BuscarProductos(string? categoria, string? buscar, string? orden)
     {
         lock (_sync)

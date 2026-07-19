@@ -26,6 +26,7 @@ builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IAuthSessionService, AuthSessionService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
 builder.Services.AddScoped<IPasswordResetEmailSender, SmtpPasswordResetEmailSender>();
+builder.Services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CampoMarketLocal", policy =>

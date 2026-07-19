@@ -15,6 +15,7 @@ public interface IUserService
 public interface IPasswordResetService
 {
     (bool Ok, string Message, string? Token) RequestPasswordReset(string correo);
+    (bool Ok, string Message) ValidatePasswordResetCode(string correo, string code);
     (bool Ok, string Message) ResetPassword(string token, string nuevo);
 }
 

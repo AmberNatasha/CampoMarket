@@ -123,10 +123,9 @@ public sealed class SqlAccountService(IUserRepository users) :
             return (true, "Si el correo existe, se genero un enlace temporal.", null);
         }
 
-        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
+        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var token = string.Concat(Enumerable.Range(0, 8)
+            .Select(_ => alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)]));
         users.AddPasswordResetToken(new PasswordResetToken
         {
             UsuarioId = user.Id,
@@ -134,12 +133,24 @@ public sealed class SqlAccountService(IUserRepository users) :
             ExpiraUtc = DateTime.UtcNow.AddHours(1)
         });
 
-        return (true, "Si el correo existe, recibirás un enlace temporal.", token);
+        return (true, "Si el correo existe, recibirás una clave temporal.", token);
+    }
+
+    public (bool Ok, string Message) ValidatePasswordResetCode(string correo, string code)
+    {
+        var user = users.FindByEmail(correo);
+        var reset = users.FindPasswordResetToken(HashResetToken(NormalizeResetCode(code)));
+        if (user is null || reset is null || reset.UsuarioId != user.Id || reset.Usado || reset.ExpiraUtc < DateTime.UtcNow)
+        {
+            return (false, "La clave no es válida o ya expiró.");
+        }
+
+        return (true, "Clave verificada.");
     }
 
     public (bool Ok, string Message) ResetPassword(string token, string nuevo)
     {
-        var tokenHash = HashResetToken(token);
+        var tokenHash = HashResetToken(NormalizeResetCode(token));
         var reset = users.FindPasswordResetToken(tokenHash);
         if (reset is null || reset.Usado || reset.ExpiraUtc < DateTime.UtcNow)
         {
@@ -158,6 +169,8 @@ public sealed class SqlAccountService(IUserRepository users) :
 
     private static string HashResetToken(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
+
+    private static string NormalizeResetCode(string code) => code.Trim().ToUpperInvariant();
 
     public IEnumerable<DireccionCliente> GetAddresses(int userId) => users.GetAddresses(userId);
 

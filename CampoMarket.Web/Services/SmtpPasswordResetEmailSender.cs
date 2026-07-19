@@ -1,6 +1,7 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace CampoMarket.Web.Services;
 
@@ -14,50 +15,99 @@ public sealed class SmtpOptions
     public string Password { get; set; } = "";
     public string FromEmail { get; set; } = "";
     public string FromName { get; set; } = "Campo Market";
+    public string ContactRecipient { get; set; } = "";
     public bool EnableSsl { get; set; } = true;
 }
 
 public interface IPasswordResetEmailSender
 {
-    Task SendAsync(string recipientEmail, string resetUrl, CancellationToken cancellationToken = default);
+    Task SendAsync(string recipientEmail, string resetCode, CancellationToken cancellationToken = default);
 }
 
-public sealed class SmtpPasswordResetEmailSender(IOptions<SmtpOptions> options) : IPasswordResetEmailSender
+public sealed class SmtpPasswordResetEmailSender(
+    IOptions<SmtpOptions> options,
+    IWebHostEnvironment environment) : IPasswordResetEmailSender
 {
     private readonly SmtpOptions _options = options.Value;
+    private readonly IWebHostEnvironment _environment = environment;
 
-    public async Task SendAsync(string recipientEmail, string resetUrl, CancellationToken cancellationToken = default)
+    public async Task SendAsync(string recipientEmail, string resetCode, CancellationToken cancellationToken = default)
     {
         ValidateConfiguration();
 
-        using var message = new MailMessage
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_options.FromName, _options.FromEmail));
+        message.To.Add(MailboxAddress.Parse(recipientEmail));
+        message.Subject = "Restablece tu contraseña de Campo Market";
+
+        var bodyBuilder = new BodyBuilder
         {
-            From = new MailAddress(_options.FromEmail, _options.FromName),
-            Subject = "Restablece tu contraseña de Campo Market",
-            Body = $"""
+            TextBody = $"""
                 Hola:
 
                 Recibimos una solicitud para restablecer la contraseña de tu cuenta de Campo Market.
 
-                Abre este enlace para crear una nueva contraseña:
-                {resetUrl}
+                Ingresa esta clave en Campo Market para crear una nueva contraseña:
+                {resetCode}
 
                 El enlace vence en una hora y solo puede utilizarse una vez. Si no solicitaste este cambio, ignora este mensaje.
                 """,
-            IsBodyHtml = false
+            HtmlBody = $$"""
+                <!doctype html>
+                <html lang="es">
+                <body style="margin:0;background:#f3f6f1;font-family:Arial,Helvetica,sans-serif;color:#243127;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6f1;padding:32px 12px;">
+                    <tr>
+                      <td align="center">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(29,69,43,.10);">
+                          <tr>
+                            <td align="center" style="background:#edf6ec;padding:28px 24px 20px;">
+                              <img src="cid:campomarket-logo" alt="Campo Market" width="150" style="display:block;max-width:150px;height:auto;">
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding:34px 38px;">
+                              <h1 style="margin:0 0 18px;font-size:25px;line-height:1.25;color:#205b32;">Restablece tu contraseña</h1>
+                              <p style="margin:0 0 14px;font-size:16px;line-height:1.6;">Hola:</p>
+                              <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">Recibimos una solicitud para restablecer la contraseña de tu cuenta de Campo Market.</p>
+                              <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#536057;text-align:center;">Ingresa esta clave en la pantalla de recuperación:</p>
+                              <div style="margin:0 auto 26px;padding:16px 20px;max-width:280px;background:#edf6ec;border:1px solid #c9dec9;border-radius:10px;text-align:center;font-family:Consolas,monospace;font-size:30px;font-weight:bold;letter-spacing:6px;color:#205b32;">{{resetCode}}</div>
+                              <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#536057;">La clave vence en una hora y solo puede utilizarse una vez.</p>
+                              <p style="margin:0;font-size:14px;line-height:1.6;color:#536057;">Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td align="center" style="border-top:1px solid #e4ebe3;padding:18px 24px;font-size:12px;color:#718075;">
+                              Este es un mensaje automático de Campo Market.
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """
         };
-        message.To.Add(new MailAddress(recipientEmail));
 
-        using var client = new SmtpClient(_options.Host, _options.Port)
+        var logoPath = Path.Combine(_environment.WebRootPath, "Images", "Logo.png");
+        if (File.Exists(logoPath))
         {
-            EnableSsl = _options.EnableSsl,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(_options.Username, _options.Password),
-            DeliveryMethod = SmtpDeliveryMethod.Network
-        };
+            var logo = bodyBuilder.LinkedResources.Add(logoPath);
+            logo.ContentId = "campomarket-logo";
+        }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        await client.SendMailAsync(message, cancellationToken);
+        message.Body = bodyBuilder.ToMessageBody();
+
+        using var client = new SmtpClient();
+        var socketOptions = _options.Port == 465
+            ? SecureSocketOptions.SslOnConnect
+            : SecureSocketOptions.StartTls;
+
+        await client.ConnectAsync(_options.Host, _options.Port, socketOptions, cancellationToken);
+        await client.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);
+        await client.SendAsync(message, cancellationToken);
+        await client.DisconnectAsync(true, cancellationToken);
     }
 
     private void ValidateConfiguration()

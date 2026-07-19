@@ -184,29 +184,59 @@ public sealed class CuentaController(
         var result = passwords.RequestPasswordReset(model.Correo);
         if (result.Token is not null)
         {
-            var resetUrl = Url.Action(
-                nameof(Restablecer),
-                "Cuenta",
-                new { token = result.Token },
-                Request.Scheme,
-                Request.Host.Value)!;
+            logger.LogInformation(
+                "Se generó un token de recuperación para {Recipient}. Iniciando envío SMTP.",
+                model.Correo.Trim());
 
             try
             {
-                await passwordResetEmailSender.SendAsync(model.Correo.Trim(), resetUrl, cancellationToken);
+                await passwordResetEmailSender.SendAsync(model.Correo.Trim(), result.Token, cancellationToken);
+                logger.LogInformation(
+                    "El servidor SMTP aceptó el correo de recuperación para {Recipient}.",
+                    model.Correo.Trim());
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "No se pudo enviar el correo de recuperación de contraseña.");
             }
         }
+        else
+        {
+            logger.LogInformation(
+                "No se generó un token de recuperación para el correo solicitado.");
+        }
 
-        ViewBag.Mensaje = "Si el correo existe, recibirás un enlace para restablecer tu contraseña.";
-        return View("~/Views/Home/Recuperar.cshtml", model);
+        TempData["Flash"] = "Si el correo existe, recibirás una clave temporal.";
+        TempData["FlashType"] = "success";
+        return RedirectToAction(nameof(VerificarRecuperacion), new { correo = model.Correo.Trim() });
     }
 
     [HttpGet("/restablecer")]
-    public IActionResult Restablecer(string token) => View(new RestablecerPasswordViewModel { Token = token });
+    public IActionResult Restablecer() => RedirectToAction(nameof(VerificarRecuperacion));
+
+    [HttpGet("/verificar-recuperacion")]
+    public IActionResult VerificarRecuperacion(string? correo = null) =>
+        View(new VerificarRecuperacionViewModel { Correo = correo?.Trim() ?? "" });
+
+    [ValidateAntiForgeryToken]
+    [HttpPost("/verificar-recuperacion")]
+    public IActionResult VerificarRecuperacion(VerificarRecuperacionViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var code = model.Codigo.Trim().ToUpperInvariant();
+        var result = passwords.ValidatePasswordResetCode(model.Correo, code);
+        if (!result.Ok)
+        {
+            ModelState.AddModelError(nameof(model.Codigo), result.Message);
+            return View(model);
+        }
+
+        return View("Restablecer", new RestablecerPasswordViewModel { Token = code });
+    }
 
     [ValidateAntiForgeryToken]
     [HttpPost("/restablecer")]

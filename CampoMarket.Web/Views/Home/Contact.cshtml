@@ -1,3 +1,4 @@
+@model CampoMarket.Web.Models.ContactoViewModel
 @{
     ViewData["Title"] = "Contacto";
 }
@@ -15,22 +16,36 @@
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="cm-card">
-                    <form>
-                        <div class="form-floating mb-3">
-                            <input class="form-control" id="name" type="text" placeholder="Nombre completo" />
-                            <label for="name">Nombre completo</label>
+                    <form method="post" asp-controller="Home" asp-action="Contact">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input class="form-control" asp-for="Nombre" placeholder="Nombre completo" />
+                                <label asp-for="Nombre"></label>
+                            </div>
+                            <span asp-validation-for="Nombre" class="text-danger"></span>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input class="form-control" id="email" type="email" placeholder="correo@ejemplo.com" />
-                            <label for="email">Correo electrónico</label>
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input class="form-control" asp-for="Correo" type="email" placeholder="correo@ejemplo.com" />
+                                <label asp-for="Correo"></label>
+                            </div>
+                            <span asp-validation-for="Correo" class="text-danger"></span>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input class="form-control" id="phone" type="tel" placeholder="8888-8888" />
-                            <label for="phone">Teléfono</label>
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input class="form-control" asp-for="Telefono" type="tel" placeholder="8888-8888" />
+                                <label asp-for="Telefono"></label>
+                            </div>
+                            <span asp-validation-for="Telefono" class="text-danger"></span>
                         </div>
-                        <div class="form-floating mb-4">
-                            <textarea class="form-control" id="message" placeholder="Mensaje" style="height: 10rem"></textarea>
-                            <label for="message">Mensaje</label>
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <textarea class="form-control" asp-for="Mensaje" placeholder="Mensaje" style="height: 10rem"></textarea>
+                                <label asp-for="Mensaje"></label>
+                            </div>
+                            <span asp-validation-for="Mensaje" class="text-danger"></span>
                         </div>
                         <button class="btn btn-primary btn-lg w-100" type="submit">Enviar</button>
                     </form>
@@ -47,10 +62,11 @@
                     </div>
                     <div class="col-sm-6 col-lg-12">
                         <div class="cm-card h-100">
-                            <i class="bi bi-geo-alt-fill cm-icon"></i>">
+                            <i class="bi bi-geo-alt-fill cm-icon"></i>
                             <h3>Ubicación</h3>
                             <p>Nos ubicamos en San José con entregas en toda la GAM, consulta por disponibilidad en tu zona.</p>
                         </div>
+                    </div>
                     <div class="col-sm-6 col-lg-12">
                         <div class="cm-card h-100">
                             <i class="bi bi-telephone cm-icon"></i>
@@ -63,3 +79,7 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
