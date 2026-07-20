@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using CampoMarketApi.Repositories;
 using CampoMarketApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace CampoMarketApi.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(ApiUserRepository users, JwtTokenService tokens) : ControllerBase
+public sealed class AuthController(UsuarioRepository users, JwtTokenService tokens) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]

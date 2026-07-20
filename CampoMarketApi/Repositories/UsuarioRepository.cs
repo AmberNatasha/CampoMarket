@@ -1,9 +1,10 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
+using CampoMarketApi.Services;
 using Microsoft.Data.SqlClient;
 
-namespace CampoMarketApi.Services;
+namespace CampoMarketApi.Repositories;
 
-public sealed class ApiUserRepository(IConfiguration configuration)
+public sealed class UsuarioRepository(IConfiguration configuration)
 {
     private readonly string _connectionString = configuration.GetConnectionString("CampoMarket")
         ?? throw new InvalidOperationException("Falta ConnectionStrings:CampoMarket.");

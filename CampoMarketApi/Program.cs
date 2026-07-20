@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using CampoMarketApi.Repositories;
 using CampoMarketApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -8,8 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
-builder.Services.AddScoped<ApiUserRepository>();
+builder.Services.AddScoped<UsuarioRepository>();
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<ProductoRepository>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
     ?? throw new InvalidOperationException("Falta la configuración JWT.");
@@ -41,6 +45,8 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
