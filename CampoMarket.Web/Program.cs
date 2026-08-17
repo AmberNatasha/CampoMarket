@@ -4,6 +4,24 @@ using CampoMarket.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient<ApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Falta Api:BaseUrl.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<ApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Falta Api:BaseUrl.");
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 

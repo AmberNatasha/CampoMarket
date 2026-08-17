@@ -1,6 +1,7 @@
-﻿using System.Security.Cryptography;
-using CampoMarketApi.Services;
+﻿using CampoMarketApi.Services;
+using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
 
 namespace CampoMarketApi.Repositories;
 
@@ -12,26 +13,30 @@ public sealed class UsuarioRepository(IConfiguration configuration)
     public AuthenticatedUser? ValidateCredentials(string email, string password)
     {
         using var connection = new SqlConnection(_connectionString);
-        connection.Open();
-        using var command = new SqlCommand("""
-            SELECT id_usuario, nombre, correo, rol, contrasena_hash, bloqueado_hasta
-            FROM dbo.Usuario
-            WHERE correo = @correo AND activo = 1;
-            """, connection);
-        command.Parameters.AddWithValue("@correo", email.Trim().ToLowerInvariant());
-        using var reader = command.ExecuteReader();
-        if (!reader.Read()) return null;
 
-        var blockedUntil = reader.IsDBNull(5) ? (DateTime?)null : reader.GetDateTime(5);
-        var passwordHash = reader.GetString(4);
-        if (blockedUntil > DateTime.Now || !VerifyPassword(password, passwordHash)) return null;
+        var parameters = new DynamicParameters();
+        parameters.Add("@correo", email.Trim().ToLowerInvariant());
+
+        var usuario = connection.QueryFirstOrDefault<UsuarioCredenciales>(
+            "sp_Usuario_ValidarCredenciales",
+            parameters,
+            commandType: System.Data.CommandType.StoredProcedure);
+
+        if (usuario is null)
+            return null;
+
+        if (usuario.BloqueadoHasta > DateTime.Now ||
+            !VerifyPassword(password, usuario.ContrasenaHash))
+        {
+            return null;
+        }
 
         return new AuthenticatedUser(
-            reader.GetInt32(0),
-            reader.GetString(1),
-            reader.GetString(2),
-            reader.GetString(3),
-            passwordHash);
+            usuario.IdUsuario,
+            usuario.Nombre,
+            usuario.Correo,
+            usuario.Rol,
+            usuario.ContrasenaHash);
     }
 
     private static bool VerifyPassword(string password, string storedHash)
@@ -54,5 +59,14 @@ public sealed class UsuarioRepository(IConfiguration configuration)
         {
             return false;
         }
+    }
+    private sealed class UsuarioCredenciales
+    {
+        public int IdUsuario { get; init; }
+        public string Nombre { get; init; } = string.Empty;
+        public string Correo { get; init; } = string.Empty;
+        public string Rol { get; init; } = string.Empty;
+        public string ContrasenaHash { get; init; } = string.Empty;
+        public DateTime? BloqueadoHasta { get; init; }
     }
 }

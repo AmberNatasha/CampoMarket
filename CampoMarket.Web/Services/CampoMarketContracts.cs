@@ -81,6 +81,10 @@ public interface IProductImageService
 
 public interface IAuthSessionService
 {
-    Task SignInAsync(HttpContext httpContext, Usuario user);
+    Task SignInAsync(
+        HttpContext httpContext,
+        Usuario user,
+        string accessToken);
+
     Task SignOutAsync(HttpContext httpContext);
 }

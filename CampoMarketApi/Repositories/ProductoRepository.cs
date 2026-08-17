@@ -14,50 +14,35 @@ public sealed class ProductoRepository(IConfiguration configuration)
     {
         using var connection = new SqlConnection(_connectionString);
 
-        return connection.Query<ProductoResponseModel>("""
-        SELECT
-            id_producto AS Id_Producto,
-            nombre_producto AS Nombre_Producto,
-            descripcion,
-            precio,
-            stock,
-            imagen_url AS Imagen_Url,
-            id_categoria AS Id_Categoria
-        FROM dbo.Producto
-        WHERE activo = 1
-        ORDER BY nombre_producto;
-        """);
+        return connection.Query<ProductoResponseModel>(
+            "sp_Producto_ObtenerTodos",
+            commandType: CommandType.StoredProcedure);
     }
 
     public ProductoResponseModel? ObtenerProductoPorId(int id)
     {
         using var connection = new SqlConnection(_connectionString);
 
-        return connection.QueryFirstOrDefault<ProductoResponseModel>("""
-        SELECT
-            id_producto AS Id_Producto,
-            nombre_producto AS Nombre_Producto,
-            descripcion,
-            precio,
-            stock,
-            imagen_url AS Imagen_Url,
-            id_categoria AS Id_Categoria
-        FROM dbo.Producto
-        WHERE id_producto = @Id
-          AND activo = 1;
-        """, new { Id = id });
+        var parameters = new DynamicParameters();
+        parameters.Add("@Id", id);
+
+        return connection.QueryFirstOrDefault<ProductoResponseModel>(
+            "sp_Producto_ObtenerPorId",
+            parameters,
+            commandType: CommandType.StoredProcedure);
     }
 
     public int? ObtenerStock(int id)
     {
         using var connection = new SqlConnection(_connectionString);
 
-        return connection.QueryFirstOrDefault<int?>("""
-        SELECT stock
-        FROM dbo.Producto
-        WHERE id_producto = @Id
-          AND activo = 1;
-        """, new { Id = id });
+        var parameters = new DynamicParameters();
+        parameters.Add("@Id", id);
+
+        return connection.QueryFirstOrDefault<int?>(
+            "sp_Producto_ObtenerStock",
+            parameters,
+            commandType: CommandType.StoredProcedure);
     }
 
     public int GuardarProducto(ProductoRequestModel model)
@@ -98,12 +83,13 @@ public sealed class ProductoRepository(IConfiguration configuration)
     {
         using var connection = new SqlConnection(_connectionString);
 
-        var stock = connection.QueryFirstOrDefault<int?>("""
-        SELECT stock
-        FROM dbo.Producto
-        WHERE id_producto = @Id
-          AND activo = 1;
-        """, new { Id = idProducto });
+        var parameters = new DynamicParameters();
+        parameters.Add("@Id", idProducto);
+
+        var stock = connection.QueryFirstOrDefault<int?>(
+            "sp_Producto_ObtenerStock",
+            parameters,
+            commandType: CommandType.StoredProcedure);
 
         if (stock is null)
             return false;

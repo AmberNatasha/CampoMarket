@@ -801,4 +801,78 @@ BEGIN
 END;
 GO
 
+CREATE OR ALTER PROCEDURE dbo.sp_Producto_ObtenerTodos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        id_producto AS Id_Producto,
+        nombre_producto AS Nombre_Producto,
+        descripcion,
+        precio,
+        stock,
+        imagen_url AS Imagen_Url,
+        id_categoria AS Id_Categoria
+    FROM dbo.Producto
+    WHERE activo = 1
+    ORDER BY nombre_producto;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.sp_Producto_ObtenerPorId
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        id_producto AS Id_Producto,
+        nombre_producto AS Nombre_Producto,
+        descripcion,
+        precio,
+        stock,
+        imagen_url AS Imagen_Url,
+        id_categoria AS Id_Categoria
+    FROM dbo.Producto
+    WHERE id_producto = @Id
+      AND activo = 1;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.sp_Producto_ObtenerStock
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT stock
+    FROM dbo.Producto
+    WHERE id_producto = @Id
+      AND activo = 1;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.sp_Usuario_ValidarCredenciales
+    @correo VARCHAR(150)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        id_usuario,
+        nombre,
+        correo,
+        rol,
+        contrasena_hash,
+        bloqueado_hasta
+    FROM dbo.Usuario
+    WHERE correo = @correo
+      AND activo = 1;
+END;
+GO
+
 PRINT 'Script inicial CampoMarket ejecutado correctamente.';

@@ -12,6 +12,7 @@ public sealed class CuentaController(
     IPasswordResetService passwords,
     IPasswordResetEmailSender passwordResetEmailSender,
     IAuthSessionService sesiones,
+    ApiClient apiClient,
     ILogger<CuentaController> logger) : Controller
 {
     [HttpGet("/login")]
@@ -21,17 +22,28 @@ public sealed class CuentaController(
     [HttpPost("/login")]
     public async Task<IActionResult> Login(string correo, string password)
     {
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-        var result = usuarios.Login(correo, password, ip);
-        if (!result.Ok || result.User is null)
+        var result = await apiClient.LoginAsync(correo, password);
+
+        if (result is null)
         {
-            ViewBag.Mensaje = result.Message;
+            ViewBag.Mensaje = "Correo o contraseña incorrectos.";
             ViewBag.TipoMensaje = "danger";
             return View("~/Views/Home/Login.cshtml");
         }
 
-        await sesiones.SignInAsync(HttpContext, result.User);
-        return result.User.Rol == RolesCampo.Admin ? RedirectToAction("Index", "Admin") : RedirectToAction("Index", "Catalogo");
+        var user = new Usuario
+        {
+            Id = result.User.Id,
+            Nombre = result.User.Name,
+            Correo = result.User.Email,
+            Rol = result.User.Role
+        };
+
+        await sesiones.SignInAsync(HttpContext, user, result.AccessToken);
+
+        return user.Rol == RolesCampo.Admin
+            ? RedirectToAction("Index", "Admin")
+            : RedirectToAction("Index", "Catalogo");
     }
 
     [HttpGet("/registro")]
