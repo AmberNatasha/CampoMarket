@@ -86,5 +86,6 @@ public interface IAuthSessionService
         Usuario user,
         string accessToken);
 
-    Task SignOutAsync(HttpContext httpContext);
+    Task SignOutAsync(
+        HttpContext httpContext);
 }

@@ -1,38 +1,27 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Security.Claims;
 
 namespace CampoMarket.Web.Services;
 
-public sealed class ApiClient(
-    HttpClient httpClient,
-    IHttpContextAccessor httpContextAccessor)
+public sealed class ApiClient(HttpClient httpClient)
 {
     private readonly HttpClient _httpClient = httpClient;
-    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
-
-    private string? GetAccessToken()
-    {
-        return _httpContextAccessor.HttpContext?
-            .User
-            .FindFirst("access_token")?
-            .Value;
-    }
 
     public async Task<HttpResponseMessage> GetAsync(
         string endpoint,
         string? accessToken = null)
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            endpoint);
+        using var request =
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                endpoint);
 
-        var token = accessToken ?? GetAccessToken();
-
-        if (!string.IsNullOrWhiteSpace(token))
+        if (!string.IsNullOrWhiteSpace(accessToken))
         {
             request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    accessToken);
         }
 
         return await _httpClient.SendAsync(request);
@@ -43,19 +32,20 @@ public sealed class ApiClient(
         HttpContent content,
         string? accessToken = null)
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            endpoint)
-        {
-            Content = content
-        };
+        using var request =
+            new HttpRequestMessage(
+                HttpMethod.Post,
+                endpoint)
+            {
+                Content = content
+            };
 
-        var token = accessToken ?? GetAccessToken();
-
-        if (!string.IsNullOrWhiteSpace(token))
+        if (!string.IsNullOrWhiteSpace(accessToken))
         {
             request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    accessToken);
         }
 
         return await _httpClient.SendAsync(request);
@@ -65,11 +55,15 @@ public sealed class ApiClient(
         string email,
         string password)
     {
-        var request = new ApiLoginRequest(email, password);
+        var request =
+            new ApiLoginRequest(
+                email,
+                password);
 
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/auth/login",
-            request);
+        using var response =
+            await _httpClient.PostAsJsonAsync(
+                "api/auth/login",
+                request);
 
         if (!response.IsSuccessStatusCode)
         {

@@ -7,26 +7,49 @@ namespace CampoMarketApi.Repositories;
 
 public sealed class UsuarioRepository(IConfiguration configuration)
 {
-    private readonly string _connectionString = configuration.GetConnectionString("CampoMarket")
-        ?? throw new InvalidOperationException("Falta ConnectionStrings:CampoMarket.");
+    private readonly string _connectionString =
+        configuration.GetConnectionString("CampoMarket")
+        ?? throw new InvalidOperationException(
+            "Falta ConnectionStrings:CampoMarket.");
 
-    public AuthenticatedUser? ValidateCredentials(string email, string password)
+    public AuthenticatedUser? ValidateCredentials(
+        string email,
+        string password)
     {
         using var connection = new SqlConnection(_connectionString);
 
-        var parameters = new DynamicParameters();
-        parameters.Add("@correo", email.Trim().ToLowerInvariant());
+        const string sql = """
+            SELECT
+                id_usuario AS IdUsuario,
+                nombre AS Nombre,
+                correo AS Correo,
+                rol AS Rol,
+                contrasena_hash AS ContrasenaHash,
+                bloqueado_hasta AS BloqueadoHasta
+            FROM dbo.Usuario
+            WHERE LOWER(LTRIM(RTRIM(correo))) = @correo
+              AND activo = 1;
+            """;
 
         var usuario = connection.QueryFirstOrDefault<UsuarioCredenciales>(
-            "sp_Usuario_ValidarCredenciales",
-            parameters,
-            commandType: System.Data.CommandType.StoredProcedure);
+            sql,
+            new
+            {
+                correo = email.Trim().ToLowerInvariant()
+            });
 
         if (usuario is null)
             return null;
 
-        if (usuario.BloqueadoHasta > DateTime.Now ||
-            !VerifyPassword(password, usuario.ContrasenaHash))
+        // Verificar si la cuenta está temporalmente bloqueada.
+        if (usuario.BloqueadoHasta.HasValue &&
+            usuario.BloqueadoHasta.Value > DateTime.Now)
+        {
+            return null;
+        }
+
+        // Verificar contraseña.
+        if (!VerifyPassword(password, usuario.ContrasenaHash))
         {
             return null;
         }
@@ -39,34 +62,68 @@ public sealed class UsuarioRepository(IConfiguration configuration)
             usuario.ContrasenaHash);
     }
 
-    private static bool VerifyPassword(string password, string storedHash)
+    private static bool VerifyPassword(
+        string password,
+        string storedHash)
     {
-        var parts = storedHash.Split('$');
-        if (parts.Length != 4 || parts[0] != "PBKDF2" || !int.TryParse(parts[1], out var iterations))
+        if (string.IsNullOrWhiteSpace(password) ||
+            string.IsNullOrWhiteSpace(storedHash))
         {
             return false;
         }
+
+        var parts = storedHash.Split('$');
+
+        if (parts.Length != 4)
+            return false;
+
+        if (!parts[0].Equals(
+                "PBKDF2",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(parts[1], out var iterations))
+            return false;
+
+        if (iterations <= 0)
+            return false;
 
         try
         {
             var salt = Convert.FromBase64String(parts[2]);
             var expected = Convert.FromBase64String(parts[3]);
+
             var actual = Rfc2898DeriveBytes.Pbkdf2(
-                password, salt, iterations, HashAlgorithmName.SHA256, expected.Length);
-            return CryptographicOperations.FixedTimeEquals(actual, expected);
+                password,
+                salt,
+                iterations,
+                HashAlgorithmName.SHA256,
+                expected.Length);
+
+            return CryptographicOperations.FixedTimeEquals(
+                actual,
+                expected);
         }
         catch (FormatException)
         {
             return false;
         }
     }
+
     private sealed class UsuarioCredenciales
     {
         public int IdUsuario { get; init; }
+
         public string Nombre { get; init; } = string.Empty;
+
         public string Correo { get; init; } = string.Empty;
+
         public string Rol { get; init; } = string.Empty;
+
         public string ContrasenaHash { get; init; } = string.Empty;
+
         public DateTime? BloqueadoHasta { get; init; }
     }
 }

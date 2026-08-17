@@ -16,30 +16,43 @@ public sealed class CuentaController(
     ILogger<CuentaController> logger) : Controller
 {
     [HttpGet("/login")]
-    public IActionResult Login() => View("~/Views/Home/Login.cshtml");
+    public IActionResult Login() =>
+        View("~/Views/Home/Login.cshtml");
 
     [ValidateAntiForgeryToken]
     [HttpPost("/login")]
-    public async Task<IActionResult> Login(string correo, string password)
+    public async Task<IActionResult> Login(
+        string correo,
+        string password)
     {
-        var result = await apiClient.LoginAsync(correo, password);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
 
-        if (result is null)
+        // Autenticación mediante la API
+        var apiLogin = await apiClient.LoginAsync(
+            correo,
+            password);
+
+        if (apiLogin is null)
         {
             ViewBag.Mensaje = "Correo o contraseña incorrectos.";
             ViewBag.TipoMensaje = "danger";
+
             return View("~/Views/Home/Login.cshtml");
         }
 
+        // Crear sesión del usuario en el Web
         var user = new Usuario
         {
-            Id = result.User.Id,
-            Nombre = result.User.Name,
-            Correo = result.User.Email,
-            Rol = result.User.Role
+            Id = apiLogin.User.Id,
+            Nombre = apiLogin.User.Name,
+            Correo = apiLogin.User.Email,
+            Rol = apiLogin.User.Role
         };
 
-        await sesiones.SignInAsync(HttpContext, user, result.AccessToken);
+        await sesiones.SignInAsync(
+            HttpContext,
+            user,
+            apiLogin.AccessToken);
 
         return user.Rol == RolesCampo.Admin
             ? RedirectToAction("Index", "Admin")
@@ -47,25 +60,43 @@ public sealed class CuentaController(
     }
 
     [HttpGet("/registro")]
-    public IActionResult Registro() => View("~/Views/Home/Registro.cshtml", new RegistroViewModel());
+    public IActionResult Registro() =>
+        View(
+            "~/Views/Home/Registro.cshtml",
+            new RegistroViewModel());
 
     [ValidateAntiForgeryToken]
     [HttpPost("/registro")]
-    public IActionResult Registro(RegistroViewModel model)
+    public IActionResult Registro(
+        RegistroViewModel model)
     {
         if (!ModelState.IsValid)
         {
-            return View("~/Views/Home/Registro.cshtml", model);
+            return View(
+                "~/Views/Home/Registro.cshtml",
+                model);
         }
 
-        var result = usuarios.Register(model.Nombre, model.Correo, model.Password, model.Telefono, model.Direccion);
+        var result = usuarios.Register(
+            model.Nombre,
+            model.Correo,
+            model.Password,
+            model.Telefono,
+            model.Direccion);
+
         if (!result.Ok)
         {
-            ModelState.AddModelError(nameof(model.Correo), result.Message);
-            return View("~/Views/Home/Registro.cshtml", model);
+            ModelState.AddModelError(
+                nameof(model.Correo),
+                result.Message);
+
+            return View(
+                "~/Views/Home/Registro.cshtml",
+                model);
         }
 
         TempData["Flash"] = result.Message;
+
         return RedirectToAction(nameof(Login));
     }
 
@@ -75,7 +106,10 @@ public sealed class CuentaController(
     public async Task<IActionResult> Logout()
     {
         await sesiones.SignOutAsync(HttpContext);
-        return RedirectToAction("Index", "Home");
+
+        return RedirectToAction(
+            "Index",
+            "Home");
     }
 
     [Authorize]
@@ -83,91 +117,133 @@ public sealed class CuentaController(
     public IActionResult Perfil()
     {
         var user = usuarios.FindUser(UserId());
-        if (user is null) return NotFound();
-        return View(new PerfilViewModel
-        {
-            Nombre = user.Nombre,
-            Telefono = user.Telefono,
-            Direccion = user.Direccion
-        });
+
+        if (user is null)
+            return NotFound();
+
+        return View(
+            new PerfilViewModel
+            {
+                Nombre = user.Nombre,
+                Telefono = user.Telefono,
+                Direccion = user.Direccion
+            });
     }
 
     [Authorize]
     [ValidateAntiForgeryToken]
     [HttpPost("/perfil")]
-    public IActionResult Perfil(PerfilViewModel model)
+    public IActionResult Perfil(
+        PerfilViewModel model)
     {
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        var result = usuarios.UpdateProfile(UserId(), model.Nombre, model.Telefono, model.Direccion);
+        var result = usuarios.UpdateProfile(
+            UserId(),
+            model.Nombre,
+            model.Telefono,
+            model.Direccion);
+
         TempData["Flash"] = result.Message;
-        TempData["FlashType"] = result.Ok ? "success" : "danger";
+        TempData["FlashType"] =
+            result.Ok ? "success" : "danger";
+
         return RedirectToAction(nameof(Perfil));
     }
 
     [Authorize]
     [HttpGet("/perfil/contraseña")]
-    public IActionResult CambiarPassword() => View(new CambiarPasswordViewModel());
+    public IActionResult CambiarPassword() =>
+        View(new CambiarPasswordViewModel());
 
     [Authorize]
     [ValidateAntiForgeryToken]
     [HttpPost("/perfil/contraseña")]
-    public IActionResult CambiarPassword(CambiarPasswordViewModel model)
+    public IActionResult CambiarPassword(
+        CambiarPasswordViewModel model)
     {
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        var result = usuarios.ChangePassword(UserId(), model.PasswordActual, model.PasswordNuevo);
+        var result = usuarios.ChangePassword(
+            UserId(),
+            model.PasswordActual,
+            model.PasswordNuevo);
+
         TempData["Flash"] = result.Message;
-        TempData["FlashType"] = result.Ok ? "success" : "danger";
-        return RedirectToAction(nameof(CambiarPassword));
+        TempData["FlashType"] =
+            result.Ok ? "success" : "danger";
+
+        return RedirectToAction(
+            nameof(CambiarPassword));
     }
 
     [Authorize(Roles = RolesCampo.Cliente)]
     [HttpGet("/perfil/direcciones")]
-    public IActionResult Direcciones() => View(direcciones.GetAddresses(UserId()));
+    public IActionResult Direcciones() =>
+        View(direcciones.GetAddresses(UserId()));
 
     [Authorize(Roles = RolesCampo.Cliente)]
     [HttpGet("/perfil/direcciones/nueva")]
-    public IActionResult NuevaDireccion() => View("DireccionForm", new DireccionFormViewModel());
+    public IActionResult NuevaDireccion() =>
+        View(
+            "DireccionForm",
+            new DireccionFormViewModel());
 
     [Authorize(Roles = RolesCampo.Cliente)]
     [HttpGet("/perfil/direcciones/{id:int}/editar")]
     public IActionResult EditarDireccion(int id)
     {
-        var address = direcciones.FindAddress(UserId(), id);
-        if (address is null) return NotFound();
-        return View("DireccionForm", new DireccionFormViewModel
-        {
-            Id = address.Id,
-            Alias = address.Alias,
-            Provincia = address.Provincia,
-            Canton = address.Canton,
-            Distrito = address.Distrito,
-            SenasExactas = address.SenasExactas,
-            Predeterminada = address.Predeterminada
-        });
+        var address =
+            direcciones.FindAddress(
+                UserId(),
+                id);
+
+        if (address is null)
+            return NotFound();
+
+        return View(
+            "DireccionForm",
+            new DireccionFormViewModel
+            {
+                Id = address.Id,
+                Alias = address.Alias,
+                Provincia = address.Provincia,
+                Canton = address.Canton,
+                Distrito = address.Distrito,
+                SenasExactas = address.SenasExactas,
+                Predeterminada = address.Predeterminada
+            });
     }
 
     [Authorize(Roles = RolesCampo.Cliente)]
     [ValidateAntiForgeryToken]
     [HttpPost("/perfil/direcciones/guardar")]
-    public IActionResult GuardarDireccion(DireccionFormViewModel model)
+    public IActionResult GuardarDireccion(
+        DireccionFormViewModel model)
     {
         if (!ModelState.IsValid)
         {
-            return View("DireccionForm", model);
+            return View(
+                "DireccionForm",
+                model);
         }
 
-        var result = direcciones.SaveAddress(UserId(), model);
+        var result = direcciones.SaveAddress(
+            UserId(),
+            model);
+
         TempData["Flash"] = result.Message;
-        TempData["FlashType"] = result.Ok ? "success" : "danger";
-        return RedirectToAction(nameof(Direcciones));
+        TempData["FlashType"] =
+            result.Ok ? "success" : "danger";
+
+        return RedirectToAction(
+            nameof(Direcciones));
     }
 
     [Authorize(Roles = RolesCampo.Cliente)]
@@ -175,25 +251,42 @@ public sealed class CuentaController(
     [HttpPost("/perfil/direcciones/{id:int}/eliminar")]
     public IActionResult EliminarDireccion(int id)
     {
-        var result = direcciones.DeleteAddress(UserId(), id);
+        var result =
+            direcciones.DeleteAddress(
+                UserId(),
+                id);
+
         TempData["Flash"] = result.Message;
-        TempData["FlashType"] = result.Ok ? "success" : "danger";
-        return RedirectToAction(nameof(Direcciones));
+        TempData["FlashType"] =
+            result.Ok ? "success" : "danger";
+
+        return RedirectToAction(
+            nameof(Direcciones));
     }
 
     [HttpGet("/recuperar")]
-    public IActionResult Recuperar() => View("~/Views/Home/Recuperar.cshtml", new RecuperarPasswordViewModel());
+    public IActionResult Recuperar() =>
+        View(
+            "~/Views/Home/Recuperar.cshtml",
+            new RecuperarPasswordViewModel());
 
     [ValidateAntiForgeryToken]
     [HttpPost("/recuperar")]
-    public async Task<IActionResult> Recuperar(RecuperarPasswordViewModel model, CancellationToken cancellationToken)
+    public async Task<IActionResult> Recuperar(
+        RecuperarPasswordViewModel model,
+        CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            return View("~/Views/Home/Recuperar.cshtml", model);
+            return View(
+                "~/Views/Home/Recuperar.cshtml",
+                model);
         }
 
-        var result = passwords.RequestPasswordReset(model.Correo);
+        var result =
+            passwords.RequestPasswordReset(
+                model.Correo);
+
         if (result.Token is not null)
         {
             logger.LogInformation(
@@ -202,14 +295,20 @@ public sealed class CuentaController(
 
             try
             {
-                await passwordResetEmailSender.SendAsync(model.Correo.Trim(), result.Token, cancellationToken);
+                await passwordResetEmailSender.SendAsync(
+                    model.Correo.Trim(),
+                    result.Token,
+                    cancellationToken);
+
                 logger.LogInformation(
                     "El servidor SMTP aceptó el correo de recuperación para {Recipient}.",
                     model.Correo.Trim());
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "No se pudo enviar el correo de recuperación de contraseña.");
+                logger.LogError(
+                    ex,
+                    "No se pudo enviar el correo de recuperación de contraseña.");
             }
         }
         else
@@ -218,55 +317,98 @@ public sealed class CuentaController(
                 "No se generó un token de recuperación para el correo solicitado.");
         }
 
-        TempData["Flash"] = "Si el correo existe, recibirás una clave temporal.";
+        TempData["Flash"] =
+            "Si el correo existe, recibirás una clave temporal.";
+
         TempData["FlashType"] = "success";
-        return RedirectToAction(nameof(VerificarRecuperacion), new { correo = model.Correo.Trim() });
+
+        return RedirectToAction(
+            nameof(VerificarRecuperacion),
+            new
+            {
+                correo = model.Correo.Trim()
+            });
     }
 
     [HttpGet("/restablecer")]
-    public IActionResult Restablecer() => RedirectToAction(nameof(VerificarRecuperacion));
+    public IActionResult Restablecer() =>
+        RedirectToAction(
+            nameof(VerificarRecuperacion));
 
     [HttpGet("/verificar-recuperacion")]
-    public IActionResult VerificarRecuperacion(string? correo = null) =>
-        View(new VerificarRecuperacionViewModel { Correo = correo?.Trim() ?? "" });
+    public IActionResult VerificarRecuperacion(
+        string? correo = null) =>
+        View(
+            new VerificarRecuperacionViewModel
+            {
+                Correo = correo?.Trim() ?? ""
+            });
 
     [ValidateAntiForgeryToken]
     [HttpPost("/verificar-recuperacion")]
-    public IActionResult VerificarRecuperacion(VerificarRecuperacionViewModel model)
+    public IActionResult VerificarRecuperacion(
+        VerificarRecuperacionViewModel model)
     {
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        var code = model.Codigo.Trim().ToUpperInvariant();
-        var result = passwords.ValidatePasswordResetCode(model.Correo, code);
+        var code =
+            model.Codigo.Trim().ToUpperInvariant();
+
+        var result =
+            passwords.ValidatePasswordResetCode(
+                model.Correo,
+                code);
+
         if (!result.Ok)
         {
-            ModelState.AddModelError(nameof(model.Codigo), result.Message);
+            ModelState.AddModelError(
+                nameof(model.Codigo),
+                result.Message);
+
             return View(model);
         }
 
-        return View("Restablecer", new RestablecerPasswordViewModel { Token = code });
+        return View(
+            "Restablecer",
+            new RestablecerPasswordViewModel
+            {
+                Token = code
+            });
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost("/restablecer")]
-    public IActionResult Restablecer(RestablecerPasswordViewModel model)
+    public IActionResult Restablecer(
+        RestablecerPasswordViewModel model)
     {
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        var result = passwords.ResetPassword(model.Token, model.PasswordNuevo);
+        var result =
+            passwords.ResetPassword(
+                model.Token,
+                model.PasswordNuevo);
+
         TempData["Flash"] = result.Message;
-        TempData["FlashType"] = result.Ok ? "success" : "danger";
-        return result.Ok ? RedirectToAction(nameof(Login)) : View(model);
+        TempData["FlashType"] =
+            result.Ok ? "success" : "danger";
+
+        return result.Ok
+            ? RedirectToAction(nameof(Login))
+            : View(model);
     }
 
     [HttpGet("/acceso-denegado")]
-    public IActionResult Denied() => View();
+    public IActionResult Denied() =>
+        View();
 
-    private int UserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private int UserId() =>
+        int.Parse(
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier)!);
 }

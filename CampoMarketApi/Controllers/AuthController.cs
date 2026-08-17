@@ -9,44 +9,70 @@ namespace CampoMarketApi.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(UsuarioRepository users, JwtTokenService tokens) : ControllerBase
+public sealed class AuthController(
+    UsuarioRepository users,
+    JwtTokenService tokens) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
     public ActionResult<LoginResponse> Login(LoginRequest request)
     {
-        var user = users.ValidateCredentials(request.Email, request.Password);
+        var user = users.ValidateCredentials(
+            request.Email,
+            request.Password);
+
         if (user is null)
         {
-            return Unauthorized(new { message = "Correo o contraseña incorrectos." });
+            return Unauthorized(new
+            {
+                message = "Correo o contraseña incorrectos."
+            });
         }
 
         var token = tokens.Create(user);
+
         return Ok(new LoginResponse(
             token.AccessToken,
             "Bearer",
             token.ExpiresAtUtc,
-            new UserResponse(user.Id, user.Name, user.Email, user.Role)));
+            new UserResponse(
+                user.Id,
+                user.Name,
+                user.Email,
+                user.Role)));
     }
 
     [Authorize]
     [HttpGet("me")]
-    public ActionResult<UserResponse> Me() => Ok(new UserResponse(
-        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
-        User.FindFirstValue(ClaimTypes.Name) ?? "",
-        User.FindFirstValue(ClaimTypes.Email) ?? "",
-        User.FindFirstValue(ClaimTypes.Role) ?? ""));
+    public ActionResult<UserResponse> Me()
+    {
+        return Ok(new UserResponse(
+            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            User.FindFirstValue(ClaimTypes.Name) ?? "",
+            User.FindFirstValue(ClaimTypes.Email) ?? "",
+            User.FindFirstValue(ClaimTypes.Role) ?? ""));
+    }
 
     [Authorize(Roles = "Admin")]
     [HttpGet("admin-check")]
-    public IActionResult AdminCheck() => Ok(new { message = "Token de administrador válido." });
+    public IActionResult AdminCheck()
+    {
+        return Ok(new
+        {
+            message = "Token de administrador válido."
+        });
+    }
 }
 
 public sealed record LoginRequest(
     [Required, EmailAddress] string Email,
     [Required] string Password);
 
-public sealed record UserResponse(int Id, string Name, string Email, string Role);
+public sealed record UserResponse(
+    int Id,
+    string Name,
+    string Email,
+    string Role);
 
 public sealed record LoginResponse(
     string AccessToken,
