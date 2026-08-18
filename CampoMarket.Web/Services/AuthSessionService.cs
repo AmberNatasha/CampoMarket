@@ -10,7 +10,8 @@ public sealed class AuthSessionService : IAuthSessionService
     public Task SignInAsync(
         HttpContext httpContext,
         Usuario user,
-        string accessToken)
+        string accessToken,
+        DateTime expiresAtUtc)
     {
         var claims = new List<Claim>
         {
@@ -41,7 +42,13 @@ public sealed class AuthSessionService : IAuthSessionService
 
         return httpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity));
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                AllowRefresh = false,
+                ExpiresUtc = new DateTimeOffset(DateTime.SpecifyKind(expiresAtUtc, DateTimeKind.Utc))
+            });
     }
 
     public Task SignOutAsync(

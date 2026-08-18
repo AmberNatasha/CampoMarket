@@ -52,7 +52,8 @@ public sealed class CuentaController(
         await sesiones.SignInAsync(
             HttpContext,
             user,
-            apiLogin.AccessToken);
+            apiLogin.AccessToken,
+            apiLogin.ExpiresAtUtc);
 
         return user.Rol == RolesCampo.Admin
             ? RedirectToAction("Index", "Admin")

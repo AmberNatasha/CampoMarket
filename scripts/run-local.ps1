@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$env:ASPNETCORE_ENVIRONMENT = "Development"
 $root = Split-Path -Parent $PSScriptRoot
 $webProject = Join-Path $root "CampoMarket.Web\CampoMarket.Web.csproj"
 $apiProject = Join-Path $root "CampoMarketApi\CampoMarketApi.csproj"
@@ -14,6 +15,10 @@ $apiContentRoot = Join-Path $root "CampoMarketApi"
 dotnet build (Join-Path $root "CampoMarket.slnx")
 $api = Start-Process dotnet -ArgumentList @($apiDll, "--urls", "http://localhost:5079", "--contentRoot", $apiContentRoot) -WindowStyle Hidden -PassThru
 try {
+    Start-Sleep -Seconds 1
+    if ($api.HasExited) {
+        throw "La API no pudo iniciar. Revisa su configuración de desarrollo."
+    }
     dotnet $dll --urls "http://localhost:$Port" --contentRoot $contentRoot
 }
 finally {

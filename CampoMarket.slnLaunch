@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Nuevo perfil",
+    "Projects": [
+      {
+        "Path": "CampoMarket.Web\\CampoMarket.Web.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "CampoMarketApi\\CampoMarketApi.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
