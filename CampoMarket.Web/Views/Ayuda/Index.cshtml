@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Centro de ayuda";
+}
+
+<section class="cm-page-header">
+    <div class="container px-4 px-lg-5">
+        <span class="cm-kicker">Estamos para ayudarte</span>
+        <h1>Centro de ayuda</h1>
+        <p>Encuentra respuestas sobre compras, entregas, pagos y tu cuenta.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <article class="cm-card h-100">
+                    <h2 class="h4">¿Cómo realizo un pedido?</h2>
+                    <p>
+                        Explora el catálogo, agrega productos al carrito,
+                        selecciona el tipo de entrega y confirma tu pedido.
+                    </p>
+                    <a class="btn btn-outline-primary"
+                       asp-controller="Catalogo"
+                       asp-action="Index">
+                        Ver catálogo
+                    </a>
+                </article>
+            </div>
+
+            <div class="col-md-6">
+                <article class="cm-card h-100">
+                    <h2 class="h4">¿Cómo consulto mis pedidos?</h2>
+                    <p>
+                        Inicia sesión y entra en la sección de pedidos para
+                        consultar su estado, productos y total.
+                    </p>
+                    <a class="btn btn-outline-primary"
+                       asp-controller="Pedidos"
+                       asp-action="Index">
+                        Mis pedidos
+                    </a>
+                </article>
+            </div>
+
+            <div class="col-md-6">
+                <article class="cm-card h-100">
+                    <h2 class="h4">¿Olvidaste tu contraseña?</h2>
+                    <p>
+                        Solicita una clave temporal mediante tu correo
+                        registrado para crear una contraseña nueva.
+                    </p>
+                    <a class="btn btn-outline-primary"
+                       asp-controller="Cuenta"
+                       asp-action="Recuperar">
+                        Recuperar contraseña
+                    </a>
+                </article>
+            </div>
+
+            <div class="col-md-6">
+                <article class="cm-card h-100">
+                    <h2 class="h4">¿Necesitas atención personal?</h2>
+                    <p>
+                        Envíanos tu consulta mediante el formulario de contacto
+                        y el equipo de Campo Market responderá por correo.
+                    </p>
+                    <a class="btn btn-outline-primary"
+                       asp-controller="Home"
+                       asp-action="Contact">
+                        Contactar
+                    </a>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
