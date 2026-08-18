@@ -13,12 +13,9 @@ builder.Services.AddHttpClient<ApiClient>(client =>
 
     client.BaseAddress = new Uri(baseUrl);
 });
-
-builder.Services.AddHttpClient<ApiClient>(client =>
+builder.Services.AddHttpClient<ApiRequestClient>(client =>
 {
-    var baseUrl = builder.Configuration["Api:BaseUrl"]
-        ?? throw new InvalidOperationException("Falta Api:BaseUrl.");
-
+    var baseUrl = builder.Configuration["Api:BaseUrl"] ?? throw new InvalidOperationException("Falta Api:BaseUrl.");
     client.BaseAddress = new Uri(baseUrl);
 });
 
@@ -27,19 +24,16 @@ builder.Logging.AddConsole();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<ICatalogRepository, SqlCatalogRepository>();
-builder.Services.AddSingleton<IUserRepository, SqlUserRepository>();
-builder.Services.AddSingleton<SqlAccountService>();
-builder.Services.AddSingleton<SqlCommerceService>();
-builder.Services.AddSingleton<CampoMarketStore>();
-builder.Services.AddSingleton<IUserService>(sp => sp.GetRequiredService<SqlAccountService>());
-builder.Services.AddSingleton<IPasswordResetService>(sp => sp.GetRequiredService<SqlAccountService>());
-builder.Services.AddSingleton<ICatalogService>(sp => sp.GetRequiredService<CampoMarketStore>());
-builder.Services.AddSingleton<ICartService>(sp => sp.GetRequiredService<SqlCommerceService>());
-builder.Services.AddSingleton<IAddressService>(sp => sp.GetRequiredService<SqlAccountService>());
-builder.Services.AddSingleton<IOrderService>(sp => sp.GetRequiredService<SqlCommerceService>());
-builder.Services.AddSingleton<IReportService>(sp => sp.GetRequiredService<SqlCommerceService>());
-builder.Services.AddSingleton<IAuditService>(sp => sp.GetRequiredService<SqlAccountService>());
+builder.Services.AddScoped<ApiAccountService>();
+builder.Services.AddScoped<IUserService>(sp => sp.GetRequiredService<ApiAccountService>());
+builder.Services.AddScoped<IPasswordResetService>(sp => sp.GetRequiredService<ApiAccountService>());
+builder.Services.AddScoped<ICatalogService, ApiCatalogService>();
+builder.Services.AddScoped<ApiCommerceService>();
+builder.Services.AddScoped<ICartService>(sp => sp.GetRequiredService<ApiCommerceService>());
+builder.Services.AddScoped<IAddressService>(sp => sp.GetRequiredService<ApiAccountService>());
+builder.Services.AddScoped<IOrderService>(sp => sp.GetRequiredService<ApiCommerceService>());
+builder.Services.AddScoped<IReportService>(sp => sp.GetRequiredService<ApiCommerceService>());
+builder.Services.AddScoped<IAuditService>(sp => sp.GetRequiredService<ApiAccountService>());
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IAuthSessionService, AuthSessionService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));

@@ -1,0 +1,8 @@
+Hola:
+
+Recibimos una solicitud para restablecer la contraseña de tu cuenta de Campo Market.
+
+Ingresa esta clave en Campo Market para crear una nueva contraseña:
+{{Codigo}}
+
+La clave vence en una hora y solo puede utilizarse una vez. Si no solicitaste este cambio, ignora este mensaje.

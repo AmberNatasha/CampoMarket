@@ -16,9 +16,9 @@
                     <label class="form-label" for="estado">Estado</label>
                     <select class="form-select" id="estado" name="estado">
                         <option value="">Todos</option>
-                        @foreach (var estado in new[] { "Pendiente", "Preparando", "Listo", "Entregado", "Cancelado" })
+                        @foreach (var opcion in Model.EstadosDisponibles)
                         {
-                            <option value="@estado" selected="@(Model.Estado == estado)">@estado</option>
+                            <option value="@opcion.Valor" selected="@(Model.Estado == opcion.Valor)">@opcion.Texto</option>
                         }
                     </select>
                 </div>
@@ -26,8 +26,10 @@
                     <label class="form-label" for="tipo">Tipo</label>
                     <select class="form-select" id="tipo" name="tipo">
                         <option value="">Todos</option>
-                        <option value="Express" selected="@(Model.Tipo == "Express")">Express</option>
-                        <option value="Recoleccion" selected="@(Model.Tipo == "Recoleccion")">Recoleccion</option>
+                        @foreach (var opcion in Model.TiposEntrega)
+                        {
+                            <option value="@opcion.Valor" selected="@(Model.Tipo == opcion.Valor)">@opcion.Texto</option>
+                        }
                     </select>
                 </div>
                 <div class="col-md-3">

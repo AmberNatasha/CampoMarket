@@ -60,10 +60,11 @@ public sealed class ProductoRepository(IConfiguration configuration)
         parameters.Add("@imagen_url", model.ImagenUrl);
         parameters.Add("@activo", model.Activo);
 
-        return connection.Execute(
+        connection.Execute(
             "sp_Producto_Guardar",
             parameters,
             commandType: System.Data.CommandType.StoredProcedure);
+        return 1;
     }
 
     public int DesactivarProducto(int id)
@@ -73,10 +74,11 @@ public sealed class ProductoRepository(IConfiguration configuration)
         var parameters = new DynamicParameters();
         parameters.Add("@id_producto", id);
 
-        return connection.Execute(
+        connection.Execute(
             "sp_Producto_Desactivar",
             parameters,
             commandType: CommandType.StoredProcedure);
+        return 1;
     }
 
     public bool VerificarStock(int idProducto, int cantidad)

@@ -53,18 +53,14 @@ public sealed class SmtpPasswordResetEmailSender(
             },
             cancellationToken);
 
+        var textBody = await EmailTemplateLoader.LoadAsync(
+            Path.Combine(AppContext.BaseDirectory, "EmailTemplates", "RecuperarContrasena.txt"),
+            new Dictionary<string, string> { ["Codigo"] = resetCode },
+            cancellationToken);
+
         var bodyBuilder = new BodyBuilder
         {
-            TextBody = $"""
-                Hola:
-
-                Recibimos una solicitud para restablecer la contraseña de tu cuenta de Campo Market.
-
-                Ingresa esta clave en Campo Market para crear una nueva contraseña:
-                {resetCode}
-
-                El enlace vence en una hora y solo puede utilizarse una vez. Si no solicitaste este cambio, ignora este mensaje.
-                """,
+            TextBody = textBody,
             HtmlBody = htmlBody
         };
 
@@ -80,9 +76,11 @@ public sealed class SmtpPasswordResetEmailSender(
 
         using var client = new SmtpClient();
 
-        var socketOptions = _options.Port == 465
-            ? SecureSocketOptions.SslOnConnect
-            : SecureSocketOptions.StartTls;
+        var socketOptions = !_options.EnableSsl
+            ? SecureSocketOptions.None
+            : _options.Port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
 
         await client.ConnectAsync(_options.Host, _options.Port, socketOptions, cancellationToken);
         await client.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);

@@ -2,6 +2,7 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Security.Cryptography;
+using System.Data;
 
 namespace CampoMarketApi.Repositories;
 
@@ -18,25 +19,13 @@ public sealed class UsuarioRepository(IConfiguration configuration)
     {
         using var connection = new SqlConnection(_connectionString);
 
-        const string sql = """
-            SELECT
-                id_usuario AS IdUsuario,
-                nombre AS Nombre,
-                correo AS Correo,
-                rol AS Rol,
-                contrasena_hash AS ContrasenaHash,
-                bloqueado_hasta AS BloqueadoHasta
-            FROM dbo.Usuario
-            WHERE LOWER(LTRIM(RTRIM(correo))) = @correo
-              AND activo = 1;
-            """;
-
         var usuario = connection.QueryFirstOrDefault<UsuarioCredenciales>(
-            sql,
+            "sp_Usuario_ValidarCredenciales",
             new
             {
                 correo = email.Trim().ToLowerInvariant()
-            });
+            },
+            commandType: CommandType.StoredProcedure);
 
         if (usuario is null)
             return null;

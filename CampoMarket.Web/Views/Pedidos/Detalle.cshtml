@@ -31,7 +31,7 @@
             </table>
             @if (Model.Estado == EstadosPedido.Pendiente)
             {
-                <form method="post" asp-controller="Pedidos" asp-action="Cancelar" asp-route-id="@Model.Id" onsubmit="return confirm('Cancelar este pedido?')">
+                <form method="post" asp-controller="Pedidos" asp-action="Cancelar" asp-route-id="@Model.Id" data-confirm="¿Cancelar este pedido?">
                     @Html.AntiForgeryToken()
                     <button class="btn btn-outline-danger" type="submit">Cancelar pedido</button>
                 </form>

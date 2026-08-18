@@ -25,7 +25,7 @@
                             <p>@direccion.Detalle</p>
                             <div class="d-flex gap-2">
                                 <a class="btn btn-outline-primary" asp-controller="Cuenta" asp-action="EditarDireccion" asp-route-id="@direccion.Id">Editar</a>
-                                <form method="post" asp-controller="Cuenta" asp-action="EliminarDireccion" asp-route-id="@direccion.Id" onsubmit="return confirm('Eliminar esta direccion?')">
+                                <form method="post" asp-controller="Cuenta" asp-action="EliminarDireccion" asp-route-id="@direccion.Id" data-confirm="¿Eliminar esta dirección?">
                                     @Html.AntiForgeryToken()
                                     <button class="btn btn-outline-danger" type="submit">Eliminar</button>
                                 </form>

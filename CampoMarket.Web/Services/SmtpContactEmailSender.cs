@@ -56,18 +56,20 @@ public sealed class SmtpContactEmailSender(
             },
             cancellationToken);
 
+        var textBody = await EmailTemplateLoader.LoadAsync(
+            Path.Combine(AppContext.BaseDirectory, "EmailTemplates", "Contacto.txt"),
+            new Dictionary<string, string>
+            {
+                ["Nombre"] = contact.Nombre.Trim(),
+                ["Correo"] = contact.Correo.Trim(),
+                ["Telefono"] = string.IsNullOrWhiteSpace(contact.Telefono) ? "No indicado" : contact.Telefono.Trim(),
+                ["Mensaje"] = contact.Mensaje.Trim()
+            },
+            cancellationToken);
+
         var bodyBuilder = new BodyBuilder
         {
-            TextBody = $"""
-                Nueva consulta desde Campo Market
-
-                Nombre: {contact.Nombre.Trim()}
-                Correo: {contact.Correo.Trim()}
-                Teléfono: {(string.IsNullOrWhiteSpace(contact.Telefono) ? "No indicado" : contact.Telefono.Trim())}
-
-                Mensaje:
-                {contact.Mensaje.Trim()}
-                """,
+            TextBody = textBody,
             HtmlBody = htmlBody
         };
 
@@ -83,9 +85,11 @@ public sealed class SmtpContactEmailSender(
 
         using var client = new SmtpClient();
 
-        var socketOptions = _options.Port == 465
-            ? SecureSocketOptions.SslOnConnect
-            : SecureSocketOptions.StartTls;
+        var socketOptions = !_options.EnableSsl
+            ? SecureSocketOptions.None
+            : _options.Port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
 
         await client.ConnectAsync(_options.Host, _options.Port, socketOptions, cancellationToken);
         await client.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);

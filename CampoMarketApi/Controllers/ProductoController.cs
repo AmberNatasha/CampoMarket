@@ -45,6 +45,7 @@ public sealed class ProductoController(ProductoRepository products) : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public IActionResult GuardarProducto(ProductoRequestModel model)
     {
         try
@@ -63,6 +64,7 @@ public sealed class ProductoController(ProductoRepository products) : Controller
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public IActionResult DesactivarProducto(int id)
     {
         try
@@ -94,6 +96,7 @@ public sealed class ProductoController(ProductoRepository products) : Controller
     }
 
     [HttpPut("{id}/stock")]
+    [Authorize(Roles = "Admin")]
     public IActionResult AjustarStock(int id, AjustarStockRequest model)
     {
         try

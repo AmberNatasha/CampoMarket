@@ -23,7 +23,13 @@ public sealed class CatalogoController(ICatalogService Catálogo) : Controller
             Buscar = buscar,
             Orden = orden,
             Pagina = pagina,
-            TotalPaginas = totalPaginas
+            TotalPaginas = totalPaginas,
+            OpcionesOrden =
+            [
+                new("", "Nombre"),
+                new("precio_asc", "Menor precio"),
+                new("precio_desc", "Mayor precio")
+            ]
         });
     }
 

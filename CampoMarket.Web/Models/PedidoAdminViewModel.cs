@@ -9,4 +9,6 @@ public sealed class PedidoAdminViewModel
     public bool Historial { get; set; }
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
+    public IReadOnlyList<OpcionSeleccion> EstadosDisponibles { get; set; } = [];
+    public IReadOnlyList<OpcionSeleccion> TiposEntrega { get; set; } = [];
 }

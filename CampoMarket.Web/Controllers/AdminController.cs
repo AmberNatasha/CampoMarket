@@ -12,7 +12,6 @@ public sealed class AdminController(
     IOrderService pedidos,
     IReportService reportes,
     IAuditService auditoria,
-    ICatalogRepository catalogRepository,
     IProductImageService imagenes) : Controller
 {
     [HttpGet("/admin")]
@@ -40,7 +39,9 @@ public sealed class AdminController(
             Buscar = buscar,
             Historial = historial,
             Pagina = pagina,
-            TotalPaginas = totalPaginas
+            TotalPaginas = totalPaginas,
+            EstadosDisponibles = EstadosPedido.Opciones,
+            TiposEntrega = CampoMarket.Web.Models.TiposEntrega.Opciones
         });
     }
 
@@ -187,9 +188,6 @@ public sealed class AdminController(
         ViewBag.Errores = auditoria.ErrorLogs.OrderByDescending(e => e.FechaUtc);
         return View(auditoria.AuditLogs.OrderByDescending(a => a.FechaUtc));
     }
-
-    [HttpGet("/admin/base-datos")]
-    public IActionResult BaseDatos() => Json(catalogRepository.GetConnectionInfo());
 
     [HttpGet("/admin/categorias/nueva")]
     public IActionResult NuevaCategoria() => View("CategoriaForm", new CategoriaFormViewModel());

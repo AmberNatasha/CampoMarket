@@ -38,7 +38,7 @@
                                             </td>
                                             <td>@CurrencyFormatter.Colones(item.Subtotal)</td>
                                             <td>
-                                                <form method="post" asp-controller="Carrito" asp-action="Eliminar" onsubmit="return confirm('Eliminar este producto?')">
+                                                <form method="post" asp-controller="Carrito" asp-action="Eliminar" data-confirm="¿Eliminar este producto?">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="productoId" value="@item.Producto.Id" />
                                                     <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
@@ -49,7 +49,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <form method="post" asp-controller="Carrito" asp-action="Vaciar" onsubmit="return confirm('Vaciar todo el carrito?')">
+                        <form method="post" asp-controller="Carrito" asp-action="Vaciar" data-confirm="¿Vaciar todo el carrito?">
                             @Html.AntiForgeryToken()
                             <button class="btn btn-outline-danger" type="submit">Vaciar carrito</button>
                         </form>
@@ -66,16 +66,17 @@
                             @Html.AntiForgeryToken()
                             <label class="form-label" for="tipoEntrega">Entrega</label>
                             <select class="form-select mb-3" id="tipoEntrega" name="tipoEntrega">
-                                <option value="@TiposEntrega.Express">Express a domicilio</option>
-                                <option value="@TiposEntrega.Recoleccion">Recoleccion en tienda</option>
+                                @foreach (var opcion in Model.TiposEntrega)
+                                {
+                                    <option value="@opcion.Valor">@opcion.Texto</option>
+                                }
                             </select>
                             <label class="form-label" for="direccionEntrega">Direccion</label>
                             <select class="form-select mb-3" id="direccionEntrega" name="direccionEntrega">
-                                @foreach (var direccion in Model.Direcciones)
+                                @foreach (var opcion in Model.OpcionesDireccion)
                                 {
-                                    <option value="@direccion.Detalle">@direccion.Alias - @direccion.Detalle</option>
+                                    <option value="@opcion.Valor">@opcion.Texto</option>
                                 }
-                                <option value="Direccion nueva">Direccion nueva o por confirmar</option>
                             </select>
                             <button class="btn btn-primary w-100" type="submit">Confirmar pedido</button>
                         </form>

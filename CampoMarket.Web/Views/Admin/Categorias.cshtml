@@ -28,7 +28,7 @@
                                 <td>@(categoria.Activa ? "Activa" : "Inactiva")</td>
                                 <td class="text-end">
                                     <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="EditarCategoria" asp-route-id="@categoria.Id">Editar</a>
-                                    <form method="post" asp-controller="Admin" asp-action="EliminarCategoria" asp-route-id="@categoria.Id" class="d-inline" onsubmit="return confirm('Eliminar categoria?')">
+                                    <form method="post" asp-controller="Admin" asp-action="EliminarCategoria" asp-route-id="@categoria.Id" class="d-inline" data-confirm="¿Eliminar categoría?">
                                         @Html.AntiForgeryToken()
                                         <button class="btn btn-outline-danger" type="submit">Eliminar</button>
                                     </form>

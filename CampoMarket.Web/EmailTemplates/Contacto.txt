@@ -1,0 +1,8 @@
+Nueva consulta desde Campo Market
+
+Nombre: {{Nombre}}
+Correo: {{Correo}}
+Teléfono: {{Telefono}}
+
+Mensaje:
+{{Mensaje}}

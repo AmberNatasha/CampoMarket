@@ -4,5 +4,7 @@ public sealed class CarritoViewModel
 {
     public IReadOnlyList<CarritoLineaViewModel> Lineas { get; set; } = [];
     public IEnumerable<DireccionCliente> Direcciones { get; set; } = [];
+    public IReadOnlyList<OpcionSeleccion> TiposEntrega { get; set; } = [];
+    public IReadOnlyList<OpcionSeleccion> OpcionesDireccion { get; set; } = [];
     public decimal Total => Lineas.Sum(x => x.Subtotal);
 }

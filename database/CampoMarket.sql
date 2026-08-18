@@ -863,16 +863,273 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-        id_usuario,
-        nombre,
-        correo,
-        rol,
-        contrasena_hash,
-        bloqueado_hasta
+        id_usuario AS IdUsuario,
+        nombre AS Nombre,
+        correo AS Correo,
+        rol AS Rol,
+        contrasena_hash AS ContrasenaHash,
+        bloqueado_hasta AS BloqueadoHasta
     FROM dbo.Usuario
     WHERE correo = @correo
       AND activo = 1;
 END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Categoria_Listar AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT id_categoria AS Id, nombre_categoria AS Nombre,
+           ISNULL(descripcion, '') AS Descripcion, activo AS Activa
+    FROM dbo.Categoria ORDER BY id_categoria;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Producto_ListarStore AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT id_producto AS Id, id_categoria AS CategoriaId, nombre_producto AS Nombre,
+           ISNULL(descripcion,'') AS Descripcion, precio AS Precio, stock AS Stock,
+           stock_minimo AS StockMinimo, ISNULL(imagen_url,'') AS ImagenUrl,
+           activo AS Activo, fecha_actualizacion AS ActualizadoUtc
+    FROM dbo.Producto ORDER BY id_producto;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Usuario_Obtener
+    @id_usuario INT = NULL, @correo VARCHAR(150) = NULL, @solo_clientes BIT = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT u.id_usuario AS Id, u.nombre AS Nombre, u.correo AS Correo,
+           ISNULL(u.telefono, '') AS Telefono,
+           ISNULL((SELECT TOP 1 CONCAT(d.provincia, ', ', d.canton, ', ', d.distrito, '. ', d.senas_exactas)
+                   FROM dbo.Direccion d WHERE d.id_usuario = u.id_usuario
+                   ORDER BY d.predeterminada DESC, d.id_direccion), '') AS Direccion,
+           u.rol AS Rol, u.contrasena_hash AS PasswordHash,
+           u.intentos_fallidos AS IntentosFallidos, u.bloqueado_hasta AS BloqueadoHastaUtc
+    FROM dbo.Usuario u
+    WHERE u.activo = 1
+      AND (@id_usuario IS NULL OR u.id_usuario = @id_usuario)
+      AND (@correo IS NULL OR u.correo = LOWER(@correo))
+      AND (@solo_clientes = 0 OR u.rol = 'Cliente')
+    ORDER BY u.nombre;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Usuario_ActualizarPerfil
+    @id_usuario INT, @nombre VARCHAR(100), @telefono VARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE dbo.Usuario SET nombre = @nombre, telefono = @telefono
+    WHERE id_usuario = @id_usuario AND activo = 1;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Usuario_ActualizarPassword
+    @id_usuario INT, @contrasena_hash VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE dbo.Usuario SET contrasena_hash = @contrasena_hash WHERE id_usuario = @id_usuario;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Direccion_Listar @id_usuario INT AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT id_direccion AS Id, id_usuario AS UsuarioId, '' AS Alias,
+           provincia AS Provincia, canton AS Canton, distrito AS Distrito,
+           senas_exactas AS SenasExactas,
+           CONCAT(provincia, ', ', canton, ', ', distrito, '. ', senas_exactas) AS Detalle,
+           predeterminada AS Predeterminada
+    FROM dbo.Direccion WHERE id_usuario = @id_usuario
+    ORDER BY predeterminada DESC, id_direccion;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Direccion_Guardar
+    @id_direccion INT = NULL OUTPUT, @id_usuario INT, @provincia VARCHAR(100),
+    @canton VARCHAR(100), @distrito VARCHAR(100), @senas_exactas VARCHAR(255), @predeterminada BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF @predeterminada = 1 UPDATE dbo.Direccion SET predeterminada = 0 WHERE id_usuario = @id_usuario;
+    IF @id_direccion IS NULL OR @id_direccion = 0
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM dbo.Direccion WHERE id_usuario = @id_usuario) SET @predeterminada = 1;
+        INSERT dbo.Direccion(id_usuario, provincia, canton, distrito, senas_exactas, predeterminada)
+        VALUES(@id_usuario, @provincia, @canton, @distrito, @senas_exactas, @predeterminada);
+        SET @id_direccion = SCOPE_IDENTITY();
+    END
+    ELSE
+        UPDATE dbo.Direccion SET provincia=@provincia, canton=@canton, distrito=@distrito,
+            senas_exactas=@senas_exactas, predeterminada=@predeterminada
+        WHERE id_direccion=@id_direccion AND id_usuario=@id_usuario;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Direccion_Eliminar @id_usuario INT, @id_direccion INT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @era_predeterminada BIT = (SELECT predeterminada FROM dbo.Direccion WHERE id_direccion=@id_direccion AND id_usuario=@id_usuario);
+    DELETE dbo.Direccion WHERE id_direccion=@id_direccion AND id_usuario=@id_usuario;
+    IF @era_predeterminada = 1
+        UPDATE dbo.Direccion SET predeterminada=1 WHERE id_direccion=(SELECT TOP 1 id_direccion FROM dbo.Direccion WHERE id_usuario=@id_usuario ORDER BY id_direccion);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Carrito_Listar @id_usuario INT AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT p.id_producto AS Id, p.id_categoria AS CategoriaId, p.nombre_producto AS Nombre,
+           ISNULL(p.descripcion,'') AS Descripcion, p.precio AS Precio, p.stock AS Stock,
+           p.stock_minimo AS StockMinimo, ISNULL(p.imagen_url,'') AS ImagenUrl,
+           p.activo AS Activo, p.fecha_actualizacion AS ActualizadoUtc, dc.cantidad AS Cantidad
+    FROM dbo.Carrito c INNER JOIN dbo.Detalle_Carrito dc ON dc.id_carrito=c.id_carrito
+    INNER JOIN dbo.Producto p ON p.id_producto=dc.id_producto
+    WHERE c.id_usuario=@id_usuario ORDER BY p.nombre_producto;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Carrito_Actualizar @id_usuario INT, @id_producto INT, @cantidad INT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @id_carrito INT=(SELECT id_carrito FROM dbo.Carrito WHERE id_usuario=@id_usuario);
+    IF @id_carrito IS NULL BEGIN INSERT dbo.Carrito(id_usuario) VALUES(@id_usuario); SET @id_carrito=SCOPE_IDENTITY(); END;
+    IF @cantidad <= 0 DELETE dbo.Detalle_Carrito WHERE id_carrito=@id_carrito AND id_producto=@id_producto;
+    ELSE
+    BEGIN
+        DECLARE @stock INT=(SELECT stock FROM dbo.Producto WHERE id_producto=@id_producto AND activo=1);
+        IF @stock IS NULL THROW 51100, 'Producto no encontrado.', 1;
+        SET @cantidad=IIF(@cantidad>@stock,@stock,@cantidad);
+        IF EXISTS(SELECT 1 FROM dbo.Detalle_Carrito WHERE id_carrito=@id_carrito AND id_producto=@id_producto)
+            UPDATE dbo.Detalle_Carrito SET cantidad=@cantidad WHERE id_carrito=@id_carrito AND id_producto=@id_producto;
+        ELSE INSERT dbo.Detalle_Carrito(id_carrito,id_producto,cantidad) VALUES(@id_carrito,@id_producto,@cantidad);
+    END;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Carrito_Eliminar @id_usuario INT, @id_producto INT = NULL AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE dc FROM dbo.Detalle_Carrito dc INNER JOIN dbo.Carrito c ON c.id_carrito=dc.id_carrito
+    WHERE c.id_usuario=@id_usuario AND (@id_producto IS NULL OR dc.id_producto=@id_producto);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Pedido_Listar
+    @id_pedido INT=NULL, @id_usuario INT=NULL, @estado VARCHAR(50)=NULL,
+    @tipo VARCHAR(100)=NULL, @incluir_cerrados BIT=1, @buscar VARCHAR(150)=NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT pe.id_pedido AS Id, pe.numero_pedido AS Numero, pe.id_usuario AS UsuarioId,
+           pe.estado AS Estado, me.tipo AS TipoEntrega,
+           CONCAT(d.provincia, ', ', d.canton, ', ', d.distrito, '. ', d.senas_exactas) AS DireccionEntrega,
+           pe.fecha_pedido AS FechaUtc, pe.fecha_cancelacion AS CanceladoUtc, pe.total AS Total
+    FROM dbo.Pedido pe INNER JOIN dbo.Metodo_Entrega me ON me.id_metodo=pe.id_metodo
+    INNER JOIN dbo.Direccion d ON d.id_direccion=pe.id_direccion
+    INNER JOIN dbo.Usuario u ON u.id_usuario=pe.id_usuario
+    WHERE (@id_pedido IS NULL OR pe.id_pedido=@id_pedido) AND (@id_usuario IS NULL OR pe.id_usuario=@id_usuario)
+      AND (@estado IS NULL OR pe.estado=@estado) AND (@tipo IS NULL OR me.tipo=@tipo)
+      AND (@incluir_cerrados=1 OR pe.estado NOT IN ('Entregado','Cancelado'))
+      AND (@buscar IS NULL OR pe.numero_pedido LIKE '%'+@buscar+'%' OR u.nombre LIKE '%'+@buscar+'%')
+    ORDER BY pe.fecha_pedido DESC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Pedido_Detalles @id_pedido INT AS
+BEGIN SET NOCOUNT ON;
+    SELECT dp.id_producto AS ProductoId,p.nombre_producto AS ProductoNombre,dp.cantidad AS Cantidad,dp.precio_unitario AS PrecioUnitario
+    FROM dbo.Detalle_Pedido dp INNER JOIN dbo.Producto p ON p.id_producto=dp.id_producto
+    WHERE dp.id_pedido=@id_pedido ORDER BY p.nombre_producto;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Pedido_CrearWeb
+    @id_usuario INT, @tipo VARCHAR(100), @direccion VARCHAR(500),
+    @numero_pedido VARCHAR(30) OUTPUT, @id_pedido INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @tipo_normalizado VARCHAR(100)=IIF(@tipo='Recoleccion','Recoleccion','Express');
+    DECLARE @id_metodo INT=(SELECT id_metodo FROM dbo.Metodo_Entrega WHERE tipo=@tipo_normalizado);
+    DECLARE @id_direccion INT;
+    IF @id_metodo IS NULL
+    BEGIN
+        INSERT dbo.Metodo_Entrega(tipo,costo_adicional) VALUES(@tipo_normalizado,IIF(@tipo_normalizado='Recoleccion',0,2.50));
+        SET @id_metodo=SCOPE_IDENTITY();
+    END;
+    IF @tipo_normalizado='Recoleccion'
+        SELECT TOP 1 @id_direccion=id_direccion FROM dbo.Direccion WHERE id_usuario=@id_usuario ORDER BY predeterminada DESC,id_direccion;
+    ELSE
+        SELECT TOP 1 @id_direccion=id_direccion FROM dbo.Direccion WHERE id_usuario=@id_usuario
+          AND CONCAT(provincia, ', ', canton, ', ', distrito, '. ', senas_exactas)=@direccion
+        ORDER BY predeterminada DESC,id_direccion;
+    IF @id_direccion IS NULL SELECT TOP 1 @id_direccion=id_direccion FROM dbo.Direccion WHERE id_usuario=@id_usuario ORDER BY predeterminada DESC,id_direccion;
+    IF @id_direccion IS NULL
+    BEGIN
+        INSERT dbo.Direccion(id_usuario,provincia,canton,distrito,senas_exactas,predeterminada)
+        VALUES(@id_usuario,'Sin provincia','Sin canton','Sin distrito',ISNULL(NULLIF(@direccion,''),'Dirección no especificada'),1);
+        SET @id_direccion=SCOPE_IDENTITY();
+    END;
+    EXEC dbo.sp_Pedido_CrearDesdeCarrito @id_usuario,@id_direccion,@id_metodo,@numero_pedido OUTPUT,@id_pedido OUTPUT;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Pedido_Historial @id_pedido INT AS
+BEGIN SET NOCOUNT ON;
+    SELECT estado AS Estado,fecha_cambio AS FechaUtc FROM dbo.Historial_Estado_Pedido
+    WHERE id_pedido=@id_pedido ORDER BY fecha_cambio;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Reporte_ProductosVendidos @desde DATE=NULL,@hasta DATE=NULL,@id_categoria INT=NULL AS
+BEGIN SET NOCOUNT ON;
+    SELECT p.nombre_producto AS Producto,SUM(dp.cantidad) AS Cantidad,SUM(dp.cantidad*dp.precio_unitario) AS Total
+    FROM dbo.Detalle_Pedido dp INNER JOIN dbo.Pedido pe ON pe.id_pedido=dp.id_pedido
+    INNER JOIN dbo.Producto p ON p.id_producto=dp.id_producto
+    WHERE pe.estado<>'Cancelado' AND (@desde IS NULL OR CAST(pe.fecha_pedido AS DATE)>=@desde)
+      AND (@hasta IS NULL OR CAST(pe.fecha_pedido AS DATE)<=@hasta) AND (@id_categoria IS NULL OR p.id_categoria=@id_categoria)
+    GROUP BY p.nombre_producto ORDER BY SUM(dp.cantidad) DESC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Reporte_Movimientos @desde DATE=NULL,@hasta DATE=NULL,@id_producto INT=NULL AS
+BEGIN SET NOCOUNT ON;
+    SELECT m.fecha_movimiento AS FechaUtc,m.id_producto AS ProductoId,p.nombre_producto AS ProductoNombre,
+           m.tipo AS Tipo,m.cantidad AS Cantidad,m.motivo AS Motivo
+    FROM dbo.Movimiento_Inventario m INNER JOIN dbo.Producto p ON p.id_producto=m.id_producto
+    WHERE (@desde IS NULL OR CAST(m.fecha_movimiento AS DATE)>=@desde)
+      AND (@hasta IS NULL OR CAST(m.fecha_movimiento AS DATE)<=@hasta) AND (@id_producto IS NULL OR m.id_producto=@id_producto)
+    ORDER BY m.fecha_movimiento DESC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Auditoria_Listar AS
+BEGIN SET NOCOUNT ON; SELECT fecha_evento AS FechaUtc,correo AS Correo,evento AS Evento,ISNULL(ip,'') AS Ip FROM dbo.Audit_Log ORDER BY fecha_evento DESC; END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_Error_Listar AS
+BEGIN SET NOCOUNT ON; SELECT fecha_error AS FechaUtc,ISNULL(ruta,'') AS Ruta,mensaje AS Mensaje FROM dbo.Log_Error ORDER BY fecha_error DESC; END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_Error_Agregar @ruta VARCHAR(255),@mensaje VARCHAR(1000) AS
+BEGIN SET NOCOUNT ON; INSERT dbo.Log_Error(ruta,mensaje) VALUES(@ruta,@mensaje); END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_Auditoria_Agregar @correo VARCHAR(150),@ip VARCHAR(64),@evento VARCHAR(100) AS
+BEGIN SET NOCOUNT ON; INSERT dbo.Audit_Log(correo,ip,evento) VALUES(@correo,@ip,@evento); END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_Token_Crear @id_usuario INT,@token_hash VARCHAR(255),@fecha_expiracion DATETIME AS
+BEGIN SET NOCOUNT ON; INSERT dbo.Token_Restablecimiento(id_usuario,token_hash,fecha_expiracion) VALUES(@id_usuario,@token_hash,@fecha_expiracion); END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_Token_Obtener @token_hash VARCHAR(255) AS
+BEGIN SET NOCOUNT ON;
+ SELECT TOP 1 id_usuario AS UsuarioId,token_hash AS Token,fecha_expiracion AS ExpiraUtc,usado AS Usado
+ FROM dbo.Token_Restablecimiento WHERE token_hash=@token_hash ORDER BY id_token DESC;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_Token_MarcarUsado @token_hash VARCHAR(255) AS
+BEGIN SET NOCOUNT ON; UPDATE dbo.Token_Restablecimiento SET usado=1 WHERE token_hash=@token_hash; END;
 GO
 
 PRINT 'Script inicial CampoMarket ejecutado correctamente.';

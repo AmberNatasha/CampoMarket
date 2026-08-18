@@ -37,7 +37,7 @@
                                 </td>
                                 <td class="text-end">
                                     <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="EditarProducto" asp-route-id="@producto.Id">Editar</a>
-                                    <form method="post" asp-controller="Admin" asp-action="DesactivarProducto" asp-route-id="@producto.Id" class="d-inline" onsubmit="return confirm('Desactivar producto?')">
+                                    <form method="post" asp-controller="Admin" asp-action="DesactivarProducto" asp-route-id="@producto.Id" class="d-inline" data-confirm="¿Desactivar producto?">
                                         @Html.AntiForgeryToken()
                                         <button class="btn btn-outline-danger" type="submit">Desactivar</button>
                                     </form>

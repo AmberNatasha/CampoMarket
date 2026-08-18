@@ -12,10 +12,17 @@ public sealed class CarritoController(ICartService carrito, IAddressService dire
     [HttpGet("/carrito")]
     public IActionResult Index()
     {
+        var addresses = direcciones.GetAddresses(UserId()).ToList();
         return View(new CarritoViewModel
         {
             Lineas = carrito.GetCart(UserId()),
-            Direcciones = direcciones.GetAddresses(UserId())
+            Direcciones = addresses,
+            TiposEntrega = CampoMarket.Web.Models.TiposEntrega.Opciones,
+            OpcionesDireccion =
+            [
+                .. addresses.Select(x => new OpcionSeleccion(x.Detalle, $"{x.Alias} - {x.Detalle}")),
+                new("Direccion nueva", "Dirección nueva o por confirmar")
+            ]
         });
     }
 
