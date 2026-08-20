@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 namespace CampoMarket.Web.Services;
 
@@ -14,14 +14,20 @@ public sealed class ApiRequestClient(HttpClient http, IHttpContextAccessor conte
     private T Send<T>(HttpMethod method, string endpoint, object? body)
     {
         using var request = new HttpRequestMessage(method, endpoint);
-        var token = context.HttpContext?.User.FindFirstValue("access_token");
+        var token = context.HttpContext is null
+            ? null
+            : context.HttpContext.GetTokenAsync("access_token").GetAwaiter().GetResult();
         if (!string.IsNullOrWhiteSpace(token)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         if (body is not null) request.Content = JsonContent.Create(body);
         using var response = http.Send(request);
         if (!response.IsSuccessStatusCode)
         {
             var detail = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(detail) ? $"La API respondió {(int)response.StatusCode}." : detail);
+            var apiMessage = string.IsNullOrWhiteSpace(detail)
+                ? $"La API respondió {(int)response.StatusCode}."
+                : detail;
+            throw new InvalidOperationException(
+                $"{method} {endpoint}: {apiMessage} Token presente: {!string.IsNullOrWhiteSpace(token)}.");
         }
         if (typeof(T) == typeof(object) || response.Content.Headers.ContentLength == 0) return default!;
         return response.Content.ReadFromJsonAsync<T>().GetAwaiter().GetResult()

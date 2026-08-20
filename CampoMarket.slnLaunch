@@ -4,11 +4,13 @@
     "Projects": [
       {
         "Path": "CampoMarket.Web\\CampoMarket.Web.csproj",
-        "Action": "Start"
+        "Action": "Start",
+        "DebugTarget": "https"
       },
       {
         "Path": "CampoMarketApi\\CampoMarketApi.csproj",
-        "Action": "Start"
+        "Action": "Start",
+        "DebugTarget": "https"
       }
     ]
   }

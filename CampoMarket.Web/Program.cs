@@ -51,7 +51,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/login";
         options.AccessDeniedPath = "/acceso-denegado";
-        options.Cookie.Name = "CampoMarket.Auth.v2";
+        options.Cookie.Name = "CampoMarket.Auth.v3";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = false;
     });

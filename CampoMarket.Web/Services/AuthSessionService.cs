@@ -7,7 +7,7 @@ namespace CampoMarket.Web.Services;
 
 public sealed class AuthSessionService : IAuthSessionService
 {
-    public Task SignInAsync(
+    public async Task SignInAsync(
         HttpContext httpContext,
         Usuario user,
         string accessToken,
@@ -29,26 +29,35 @@ public sealed class AuthSessionService : IAuthSessionService
 
             new(
                 ClaimTypes.Role,
-                user.Rol),
-
-            new(
-                "access_token",
-                accessToken)
+                user.Rol)
         };
 
         var identity = new ClaimsIdentity(
             claims,
             CookieAuthenticationDefaults.AuthenticationScheme);
 
-        return httpContext.SignInAsync(
+        await httpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        var properties = new AuthenticationProperties
+        {
+            IsPersistent = false,
+            AllowRefresh = false,
+            ExpiresUtc = new DateTimeOffset(DateTime.SpecifyKind(expiresAtUtc, DateTimeKind.Utc))
+        };
+        properties.StoreTokens(
+        [
+            new AuthenticationToken
+            {
+                Name = "access_token",
+                Value = accessToken
+            }
+        ]);
+
+        await httpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity),
-            new AuthenticationProperties
-            {
-                IsPersistent = true,
-                AllowRefresh = false,
-                ExpiresUtc = new DateTimeOffset(DateTime.SpecifyKind(expiresAtUtc, DateTimeKind.Utc))
-            });
+            properties);
     }
 
     public Task SignOutAsync(

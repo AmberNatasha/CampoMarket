@@ -4,6 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:Api__BaseUrl = "http://localhost:5079"
 $root = Split-Path -Parent $PSScriptRoot
 $webProject = Join-Path $root "CampoMarket.Web\CampoMarket.Web.csproj"
 $apiProject = Join-Path $root "CampoMarketApi\CampoMarketApi.csproj"
