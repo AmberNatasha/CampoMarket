@@ -79,26 +79,6 @@
                 </div>
             }
         </div>
-        <nav class="mt-4" aria-label="Paginacion Catálogo">
-            <ul class="pagination justify-content-center">
-                @for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
-                {
-                    <li class="page-item @(pagina == Model.Pagina ? "active" : "")">
-                        <a class="page-link"
-                           href="@Url.Action("Index", "Catalogo", new
-                           {
-                               categoria = Model.Categoria,
-                               buscar = Model.Buscar,
-                               orden = Model.Orden,
-                               pagina = pagina
-                           })">
-                            @pagina
-                        </a>
-                    </li>
-                }
-
-            </ul>
-        </nav>
     </div>
 </section>
 

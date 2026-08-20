@@ -7,7 +7,5 @@ public sealed class CatálogoViewModel
     public string? Categoria { get; set; }
     public string? Buscar { get; set; }
     public string? Orden { get; set; }
-    public int Pagina { get; set; } = 1;
-    public int TotalPaginas { get; set; } = 1;
     public IReadOnlyList<OpcionSeleccion> OpcionesOrden { get; set; } = [];
 }

@@ -155,11 +155,29 @@ public sealed class AdminController(
 
     [ValidateAntiForgeryToken]
     [HttpPost("/admin/productos/{id:int}/stock")]
-    public IActionResult AjustarStock(int id, int cantidad, string motivo)
+    public IActionResult AjustarStock(int id, int cantidad, string? motivo)
     {
-        var result = Catálogo.AdjustStock(id, cantidad, motivo);
-        TempData["Flash"] = result.Message;
-        TempData["FlashType"] = result.Ok ? "success" : "danger";
+        if (cantidad == 0 || string.IsNullOrWhiteSpace(motivo))
+        {
+            TempData["Flash"] = cantidad == 0
+                ? "La cantidad del ajuste no puede ser cero."
+                : "Indica el motivo del ajuste de stock.";
+            TempData["FlashType"] = "danger";
+            return RedirectToAction(nameof(Productos));
+        }
+
+        try
+        {
+            var result = Catálogo.AdjustStock(id, cantidad, motivo.Trim());
+            TempData["Flash"] = result.Message;
+            TempData["FlashType"] = result.Ok ? "success" : "danger";
+        }
+        catch (Exception)
+        {
+            TempData["Flash"] = "No se pudo ajustar el stock. Verifica la cantidad e inténtalo nuevamente.";
+            TempData["FlashType"] = "danger";
+        }
+
         return RedirectToAction(nameof(Productos));
     }
 

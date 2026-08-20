@@ -30,14 +30,18 @@
                                 <td>
                                     <form method="post" asp-controller="Admin" asp-action="AjustarStock" asp-route-id="@producto.Id" class="d-flex gap-2">
                                         @Html.AntiForgeryToken()
-                                        <input class="form-control stock-input" type="number" name="cantidad" value="1" />
-                                        <input class="form-control" name="motivo" placeholder="Motivo" />
+                                        <input class="form-control stock-input" type="number" name="cantidad" value="1" required />
+                                        <input class="form-control" name="motivo" placeholder="Motivo" maxlength="255" required />
                                         <button class="btn btn-outline-primary" type="submit">Ajustar</button>
                                     </form>
                                 </td>
                                 <td class="text-end">
                                     <a class="btn btn-outline-primary" asp-controller="Admin" asp-action="EditarProducto" asp-route-id="@producto.Id">Editar</a>
-                                    <form method="post" asp-controller="Admin" asp-action="DesactivarProducto" asp-route-id="@producto.Id" class="d-inline" data-confirm="¿Desactivar producto?">
+                                    <form method="post" asp-controller="Admin" asp-action="DesactivarProducto" asp-route-id="@producto.Id" class="d-inline"
+                                          data-confirm="¿Estás seguro de que deseas desactivar este producto?"
+                                          data-confirm-title="Confirmar desactivación"
+                                          data-confirm-button="Desactivar"
+                                          data-confirm-class="btn-danger">
                                         @Html.AntiForgeryToken()
                                         <button class="btn btn-outline-danger" type="submit">Desactivar</button>
                                     </form>

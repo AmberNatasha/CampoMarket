@@ -8,22 +8,17 @@ namespace CampoMarket.Web.Controllers;
 public sealed class CatalogoController(ICatalogService Catálogo) : Controller
 {
     [HttpGet("/catalogo")]
-    public IActionResult Index(string? categoria, string? buscar, string? orden, int pagina = 1)
+    public IActionResult Index(string? categoria, string? buscar, string? orden)
     {
-        const int pageSize = 6;
         var productos = Catálogo.BuscarProductos(categoria, buscar, orden).ToList();
-        var totalPaginas = Math.Max(1, (int)Math.Ceiling(productos.Count / (double)pageSize));
-        pagina = Math.Clamp(pagina, 1, totalPaginas);
 
         return View(new CatálogoViewModel
         {
-            Productos = productos.Skip((pagina - 1) * pageSize).Take(pageSize),
+            Productos = productos,
             Categorias = Catálogo.Categorias.Where(c => c.Activa),
             Categoria = categoria,
             Buscar = buscar,
             Orden = orden,
-            Pagina = pagina,
-            TotalPaginas = totalPaginas,
             OpcionesOrden =
             [
                 new("", "Nombre"),
@@ -34,17 +29,12 @@ public sealed class CatalogoController(ICatalogService Catálogo) : Controller
     }
 
     [HttpGet("/catalogo/buscar-json")]
-    public IActionResult BuscarJson(string? categoria, string? buscar, string? orden, int pagina = 1)
+    public IActionResult BuscarJson(string? categoria, string? buscar, string? orden)
     {
-        const int pageSize = 6;
         var productos = Catálogo.BuscarProductos(categoria, buscar, orden).ToList();
-        var totalPaginas = Math.Max(1, (int)Math.Ceiling(productos.Count / (double)pageSize));
-        pagina = Math.Clamp(pagina, 1, totalPaginas);
         return Json(new
         {
-            pagina,
-            totalPaginas,
-            productos = productos.Skip((pagina - 1) * pageSize).Take(pageSize).Select(p => new
+            productos = productos.Select(p => new
             {
                 p.Id,
                 p.Nombre,
